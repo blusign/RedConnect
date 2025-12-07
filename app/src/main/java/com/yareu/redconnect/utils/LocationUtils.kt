@@ -1,0 +1,41 @@
+package com.yareu.redconnect.utils
+
+import kotlin.math.*
+
+object LocationUtils {
+    /**
+     * Hitung jarak antara 2 koordinat (dalam meter)
+     * Menggunakan Haversine Formula
+     */
+    fun calculateDistance(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double
+    ): Double {
+        val earthRadius = 6371000.0 // meter
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return earthRadius * c
+    }
+
+    /**
+     * Format jarak: "2.5 km" atau "850 m"
+     */
+    fun formatDistance(meters: Double): String {
+        return if (meters < 1000) {
+            "${meters.toInt()} m"
+        } else {
+            val km = meters / 1000
+            "%.1f km".format(km)
+        }
+    }
+}
