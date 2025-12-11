@@ -1,4 +1,4 @@
-package com.yareu.redconnect.ui.screens
+package com.yareu.redconnect.ui.onboardingScreens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

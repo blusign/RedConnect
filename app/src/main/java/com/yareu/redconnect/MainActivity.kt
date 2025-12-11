@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.yareu.redconnect.navigation.Screen
-import com.yareu.redconnect.ui.screens.OnboardingScreen
+import com.yareu.redconnect.ui.onboardingScreens.OnboardingScreen
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 
 class MainActivity : ComponentActivity() {
