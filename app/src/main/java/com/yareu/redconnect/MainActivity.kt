@@ -26,13 +26,18 @@ class MainActivity : ComponentActivity() {
                     // Onboarding Screen
                     composable(Screen.Onboarding.route) {
                         OnboardingScreen(
-                            onNavigateToNext = {
+                            onOnboardingFinished = {
                                 navController.navigate(Screen.RoleSelector.route) {
                                     popUpTo(Screen.Onboarding.route) { inclusive = true }
                                 }
                             }
                         )
                     }
+
+                    // perlu menambahkan definisi untuk Screen.RoleSelector.route di sini
+                    // composable(Screen.RoleSelector.route) {
+                    //     RoleSelectorScreen()
+                    // }
                 }
             }
         }
