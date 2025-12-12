@@ -12,7 +12,8 @@ data class EmergencyRequest(
     val note: String = "",
     val status: RequestStatus = RequestStatus.WAITING,
     val timeAgo: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val respondingDonors: List<DonorResponse> = emptyList()
 )
 
 enum class RequestStatus {
