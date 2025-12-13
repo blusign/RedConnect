@@ -1,0 +1,57 @@
+package com.yareu.redconnect.ui.components.navigation
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.yareu.redconnect.ui.theme.*
+
+@Composable
+fun PemohonBottomNavigationBar(
+    currentRoute: String,
+    onNavigate: (String) -> Unit
+) {
+    NavigationBar(
+        containerColor = White,
+        tonalElevation = 0.dp
+    ) {
+        // Beranda
+        NavigationBarItem(
+            selected = currentRoute == "home_pemohon",
+            onClick = { onNavigate("home_pemohon") },
+            icon = { Icon(Icons.Default.Home, "Beranda") },
+            label = { Text("Beranda", fontSize = 12.sp) },
+            colors = navigationBarColors()
+        )
+        // Riwayat
+        NavigationBarItem(
+            selected = currentRoute == "riwayat_pemohon",
+            onClick = { onNavigate("riwayat_pemohon") },
+            icon = { Icon(Icons.Default.History, "Riwayat") },
+            label = { Text("Riwayat", fontSize = 12.sp) },
+            colors = navigationBarColors()
+        )
+        // Profil
+        NavigationBarItem(
+            selected = currentRoute == "profil_pemohon",
+            onClick = { onNavigate("profil_pemohon") },
+            icon = { Icon(Icons.Default.Person, "Profil") },
+            label = { Text("Profil", fontSize = 12.sp) },
+            colors = navigationBarColors()
+        )
+    }
+}
+
+@Composable
+private fun navigationBarColors() = NavigationBarItemDefaults.colors(
+    selectedIconColor = BurgundyPrimary,
+    selectedTextColor = BurgundyPrimary,
+    indicatorColor = Color.Transparent,
+    unselectedIconColor = Gray,
+    unselectedTextColor = Gray
+)

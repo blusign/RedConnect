@@ -7,12 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,11 +21,11 @@ import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.ui.theme.*
 import com.yareu.redconnect.ui.components.cards.*
 import com.yareu.redconnect.data.EmergencyRequest
+import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeDonorScreen() {
-    var selectedTab by remember { mutableStateOf(0) }
+fun HomePendonorScreen(onNavigate: (String) -> Unit = {}) {
     var isAvailable by remember { mutableStateOf(true) }
 
     // Sample data
@@ -97,66 +92,10 @@ fun HomeDonorScreen() {
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = White,
-                tonalElevation = 8.dp
-            ) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.Home, "Beranda") },
-                    label = { Text("Beranda", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.History, "Riwayat") },
-                    label = { Text("Riwayat", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.Settings, "Permintaan") },
-                    label = { Text("Permintaan", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    icon = { Icon(Icons.Default.Person, "Profil") },
-                    label = { Text("Profil", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-            }
+            PendonorBottomNavigationBar(
+                currentRoute = "home_donor",
+                onNavigate = onNavigate
+            )
         }
     ) { paddingValues ->
         LazyColumn(
@@ -168,21 +107,15 @@ fun HomeDonorScreen() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
-
-            // Status Toggle - REUSABLE COMPONENT
             item {
                 StatusToggleCard(
                     isAvailable = isAvailable,
                     onToggleChange = { isAvailable = it }
                 )
             }
-
-            // Personal Info - REUSABLE COMPONENT
             item {
                 PersonalInfoCard()
             }
-
-            // Emergency Requests Section
             item {
                 Text(
                     text = "Permintaan Darurat Terdekat",
@@ -210,8 +143,8 @@ fun HomeDonorScreen() {
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun HomeDonorScreenPreview() {
-    MaterialTheme {
-        HomeDonorScreen()
+fun HomePendonorScreenPreview() {
+    RedConnectTheme {
+        HomePendonorScreen()
     }
 }

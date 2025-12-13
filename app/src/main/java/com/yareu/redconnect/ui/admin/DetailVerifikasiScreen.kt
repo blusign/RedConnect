@@ -23,7 +23,7 @@ import com.yareu.redconnect.ui.theme.*
 
 @Composable
 fun DetailVerifikasiScreen(
-    // Nantinya, ViewModel akan menyediakan data ini berdasarkan requestId
+    // ViewModel menyediakan data ini berdasarkan requestId
     request: EmergencyRequest = dummyDetailRequest,
     donorResponse: DonorResponse = dummyDetailDonor,
     isEligible: Boolean = false, // Hasil pengecekan riwayat donor

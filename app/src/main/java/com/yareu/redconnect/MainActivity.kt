@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.yareu.redconnect.navigation.Screen
+import com.yareu.redconnect.navigations.Screen
 import com.yareu.redconnect.ui.onboardingScreens.OnboardingScreen
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 

@@ -6,27 +6,23 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.ui.theme.*
-import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
 import com.yareu.redconnect.data.DonorHistory
 import com.yareu.redconnect.data.HistoryStatus
+import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RiwayatDonorScreen(
-    onBackClick: () -> Unit = {}
+    onNavigate: (String) -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
@@ -65,73 +61,26 @@ fun RiwayatDonorScreen(
 
     Scaffold(
         topBar = {
-            TopBarWithBack(
-                title = "Riwayat Donor",
-                onBackClick = onBackClick
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Riwayat Donor",
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = White
+                )
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = White,
-                tonalElevation = 8.dp
-            ) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.Home, "Beranda") },
-                    label = { Text("Beranda", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.List, "Riwayat") },
-                    label = { Text("Riwayat", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.Settings, "Permintaan") },
-                    label = { Text("Permintaan", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    icon = { Icon(Icons.Default.Person, "Profil") },
-                    label = { Text("Profil", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
-                    )
-                )
-            }
-        }
+            PendonorBottomNavigationBar(
+                currentRoute = "riwayat_donor",
+                onNavigate = onNavigate
+            )
+        },
+        containerColor = LightGray
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -182,7 +131,6 @@ fun RiwayatDonorScreen(
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
 
-            // Download Button (Fixed at bottom)
             Button(
                 onClick = { /* TODO: Download */ },
                 modifier = Modifier
@@ -283,7 +231,7 @@ fun HistoryCard(history: DonorHistory) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RiwayatDonorScreenPreview() {
-    MaterialTheme {
+    RedConnectTheme {
         RiwayatDonorScreen()
     }
 }

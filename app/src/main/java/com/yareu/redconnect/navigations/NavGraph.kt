@@ -1,4 +1,4 @@
-package com.yareu.redconnect.navigation
+package com.yareu.redconnect.navigations
 
 // Sealed class untuk routes
 sealed class Screen(val route: String) {

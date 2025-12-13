@@ -28,6 +28,7 @@ import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.DonorResponse
 import com.yareu.redconnect.data.DonorResponseStatus
 import com.yareu.redconnect.data.RequestStatus
+import androidx.compose.material.icons.rounded.Whatsapp
 
 @Composable
 fun PilihPendonorScreen(
@@ -290,7 +291,12 @@ fun PendonorCard(
                             .size(40.dp)
                             .background(SuccessGreen, CircleShape)
                     ) {
-                        Text("💬", fontSize = 18.sp)
+                        Icon(
+                            imageVector = Icons.Rounded.Whatsapp,
+                            contentDescription = "Chat via WhatsApp",
+                            tint = White,
+                            modifier = Modifier.size(24.dp) // Sesuaikan ukuran ikon
+                        )
                     }
 
                     Spacer(Modifier.height(4.dp))

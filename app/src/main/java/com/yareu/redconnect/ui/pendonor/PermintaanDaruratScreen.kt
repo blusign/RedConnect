@@ -8,14 +8,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.yareu.redconnect.ui.theme.*
-import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
 import com.yareu.redconnect.ui.components.cards.EmergencyRequestCard
 import com.yareu.redconnect.data.EmergencyRequest
+import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar // <-- 1. TAMBAHKAN IMPORT
+import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.RedConnectTheme
+import com.yareu.redconnect.ui.theme.White
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermintaanDaruratScreen(
-    onBackClick: () -> Unit = {},
+    onNavigate: (String) -> Unit = {},
     onDetailClick: (String) -> Unit = {}
 ) {
     val requests = listOf(
@@ -58,9 +64,15 @@ fun PermintaanDaruratScreen(
 
     Scaffold(
         topBar = {
-            TopBarWithBack(
-                title = "Permintaan Darurat",
-                onBackClick = onBackClick
+            TopAppBar(
+                title = { Text("Permintaan Darurat", fontWeight = FontWeight.Bold, color = DarkText) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
+            )
+        },
+        bottomBar = {
+            PendonorBottomNavigationBar(
+                currentRoute = "permintaan_donor",
+                onNavigate = onNavigate
             )
         }
     ) { paddingValues ->
@@ -91,7 +103,7 @@ fun PermintaanDaruratScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PermintaanDaruratScreenPreview() {
-    MaterialTheme {
+    RedConnectTheme {
         PermintaanDaruratScreen()
     }
 }
