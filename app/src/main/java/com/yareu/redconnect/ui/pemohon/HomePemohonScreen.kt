@@ -5,45 +5,43 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.ui.theme.*
+import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import com.yareu.redconnect.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomePemohonScreen(
     onSOSClick: () -> Unit = {},
-    onDetailRequestClick: () -> Unit = {}
+    onNavigate: (String) -> Unit = {},
+    onTrackDonorClick: () -> Unit = {}
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
-
     // Sample: Ada permintaan aktif atau tidak
-    val hasActiveRequest = true // Nanti dari ViewModel
+    val hasActiveRequest = true // dari ViewModel
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "RedConnect",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DarkText
+                    Image(
+                        painter = painterResource(id = R.drawable.redconnect_logo),
+                        contentDescription = "RedConnect Logo",
+                        modifier = Modifier.height(200.dp),
+                        colorFilter = ColorFilter.tint(BurgundyPrimary)
                     )
                 },
                 actions = {
@@ -59,48 +57,10 @@ fun HomePemohonScreen(
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = White, tonalElevation = 8.dp) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.Home, "Beranda") },
-                    label = { Text("Beranda", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Gray,
-                        unselectedTextColor = Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.History, "Riwayat") },
-                    label = { Text("Riwayat", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Gray,
-                        unselectedTextColor = Gray
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.Person, "Profil") },
-                    label = { Text("Profil", fontSize = 12.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BurgundyPrimary,
-                        selectedTextColor = BurgundyPrimary,
-                        indicatorColor = Color.Transparent,
-                        unselectedIconColor = Gray,
-                    )
-                )
-            }
+            PemohonBottomNavigationBar(
+                currentRoute = "home_pemohon",
+                onNavigate = onNavigate
+            )
         }
     ) { padding ->
         Column(
@@ -137,7 +97,7 @@ fun HomePemohonScreen(
             Spacer(Modifier.height(16.dp))
 
             if (hasActiveRequest) {
-                ActiveRequestCard(onDetailClick = onDetailRequestClick)
+                ActiveRequestCard(onDetailClick = onTrackDonorClick)
             } else {
                 NoRequestCard()
             }
@@ -192,17 +152,17 @@ fun ActiveRequestCard(onDetailClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("✅ Ada permintaan aktif", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SuccessGreen)
+            Text("Pendonor ditemukan!", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BlueAccent)
             Spacer(Modifier.height(8.dp))
-            Text("• O+ • 2 kantong", fontSize = 13.sp, color = Gray)
-            Text("• 3 pendonor siap", fontSize = 13.sp, color = Gray)
+            Text("• Budi Santoso (O+) sedang dalam perjalanan.", fontSize = 13.sp, color = Gray, fontWeight = FontWeight.Medium)
+            Text("• Membawa 2 kantong ke RS Harapan Kita.", fontSize = 13.sp, color = Gray)
             Spacer(Modifier.height(12.dp))
             Button(
                 onClick = onDetailClick,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = BurgundyPrimary)
             ) {
-                Text("LIHAT DETAIL")
+                Text("LACAK PENDONOR")
             }
         }
     }

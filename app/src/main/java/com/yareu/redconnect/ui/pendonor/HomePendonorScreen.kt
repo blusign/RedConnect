@@ -1,5 +1,6 @@
 package com.yareu.redconnect.ui.pendonor
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yareu.redconnect.R
 import com.yareu.redconnect.ui.theme.*
 import com.yareu.redconnect.ui.components.cards.*
 import com.yareu.redconnect.data.EmergencyRequest
@@ -48,32 +52,12 @@ fun HomePendonorScreen(onNavigate: (String) -> Unit = {}) {
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Profile Avatar
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFE8D5C4)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF5E6D3))
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Text(
-                            text = "Halo, Budi!",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DarkText
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.redconnect_logo),
+                        contentDescription = "RedConnect Logo",
+                        modifier = Modifier.height(200.dp),
+                        colorFilter = ColorFilter.tint(BurgundyPrimary)
+                    )
                 },
                 actions = {
                     IconButton(onClick = { /* TODO: Open notifications */ }) {
@@ -107,6 +91,15 @@ fun HomePendonorScreen(onNavigate: (String) -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
+            item {
+                Text(
+                    text = "Halo, Budi!",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText,
+                    modifier = Modifier.padding(bottom = 8.dp) // Beri sedikit jarak ke bawah
+                )
+            }
             item {
                 StatusToggleCard(
                     isAvailable = isAvailable,

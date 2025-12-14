@@ -24,16 +24,27 @@ import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.R // Pastikan import R benar
 import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
 import com.yareu.redconnect.ui.theme.*
+import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfilPemohonScreen(
-    onBackClick: () -> Unit = {},
+    onNavigate: (String) -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onEditProfileClick: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
-            TopBarWithBack(title = "Profil", onBackClick = onBackClick)
+            TopAppBar(
+                title = { Text("Profil", fontWeight = FontWeight.Bold, color = DarkText) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
+            )
+        },
+        bottomBar = {
+            PemohonBottomNavigationBar(
+                currentRoute = "profil_pemohon",
+                onNavigate = onNavigate
+            )
         },
         containerColor = LightGray
     ) { padding ->

@@ -1,6 +1,7 @@
 package com.yareu.redconnect.ui.pemohon
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -21,7 +22,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun LoadingSiaranScreen(
     request: EmergencyRequest? = null,  // Terima data request
-    onDonorsFound: () -> Unit = {}
+    onDonorsFound: () -> Unit = {},
+    onCancelClick: () -> Unit = {}
 ) {
     // Ambil jumlah pendonor dari request
     val donorCount = request?.respondingDonors?.size ?: 0
@@ -64,7 +66,9 @@ fun LoadingSiaranScreen(
         label = "scale3"
     )
 
-    Scaffold { padding ->
+    Scaffold (
+        containerColor = LightGray
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -144,6 +148,19 @@ fun LoadingSiaranScreen(
                 CircularProgressIndicator(color = PinkAccent)
                 Spacer(Modifier.height(8.dp))
                 Text("Mencari pendonor terdekat...", fontSize = 14.sp, color = Gray)
+            }
+
+            Spacer(Modifier.weight(1f)) // Mendorong tombol ke bawah
+
+            // TOMBOL BATALKAN
+            OutlinedButton(
+                onClick = onCancelClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                border = BorderStroke(1.dp, Gray)
+            ) {
+                Text("Batalkan Pencarian", color = Gray, fontWeight = FontWeight.Bold)
             }
         }
     }

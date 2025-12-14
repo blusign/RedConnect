@@ -25,6 +25,10 @@ import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.RequestStatus
 import com.yareu.redconnect.ui.theme.*
 import com.yareu.redconnect.ui.components.navigation.AdminBottomNavigationBar
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import com.yareu.redconnect.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,14 +53,22 @@ fun HomeAdminScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = when (selectedTab) {
-                            1 -> "Riwayat Verifikasi"
-                            2 -> "Profil Admin"
-                            else -> "RedConnect Admin"
-                        },
-                        fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DarkText
-                    )
+                    if (selectedTab == 0) { // Jika di tab Beranda
+                        Image(
+                            painter = painterResource(id = R.drawable.redconnect_logo),
+                            contentDescription = "RedConnect Admin Logo",
+                            modifier = Modifier.height(200.dp),
+                            colorFilter = ColorFilter.tint(BurgundyPrimary)
+                        )
+                    } else {
+                        Text(
+                            text = when (selectedTab) {
+                                1 -> "Riwayat Verifikasi"
+                                else -> "Profil Admin"
+                            },
+                            fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DarkText
+                        )
+                    }
                 },
                 actions = {
                     IconButton(onClick = { /* TODO: Notifikasi */ }) {
