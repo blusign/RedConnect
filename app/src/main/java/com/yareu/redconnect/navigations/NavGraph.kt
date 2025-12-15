@@ -1,36 +1,40 @@
 package com.yareu.redconnect.navigations
 
-// Sealed class untuk routes
+// Sealed class untuk rute type-safe
 sealed class Screen(val route: String) {
-    // Auth
-    object Splash : Screen("splash")
+
+    // 1. Alur Awal
     object Onboarding : Screen("onboarding")
-    object RoleSelector : Screen("role_selector")
-    object Login : Screen("login")
-    object Register : Screen("register")
+    object Auth : Screen("auth") // Menggantikan RoleSelector, Login, Register menjadi satu layar
 
-    // Donor
-    object HomeDonor : Screen("home_donor")
-    object RiwayatDonor : Screen("riwayat_donor")
-    object DetailPermintaan : Screen("detail_permintaan/{id}") {
-        fun createRoute(id: String) = "detail_permintaan/$id"
-    }
-    object ProfilDonor : Screen("profil_donor")
-
-    // Pemohon
+    // 2. Alur Pemohon
     object HomePemohon : Screen("home_pemohon")
-    object SOSForm : Screen("sos_form")
-    object ProgressDonor : Screen("progress_donor")
-    object PilihDonor : Screen("pilih_donor/{requestId}") {
-        fun createRoute(requestId: String) = "pilih_donor/$requestId"
+    object RiwayatPemohon : Screen("riwayat_pemohon")
+    object ProfilPemohon : Screen("profil_pemohon")
+    object FormSOS : Screen("form_sos")
+    object LoadingSiaran : Screen("loading_siaran/{requestId}") {
+        fun createRoute(requestId: String) = "loading_siaran/$requestId"
+    }
+    object LacakPendonor : Screen("lacak_pendonor/{requestId}") {
+        fun createRoute(requestId: String) = "lacak_pendonor/$requestId"
     }
 
-    // Admin
+    // 3. Alur Pendonor
+    object HomePendonor : Screen("home_donor")
+    object PermintaanDarurat : Screen("permintaan_donor")
+    object RiwayatDonor : Screen("riwayat_donor")
+    object ProfilPendonor : Screen("profil_donor")
+    object DetailPermintaan : Screen("detail_permintaan/{requestId}") {
+        fun createRoute(requestId: String) = "detail_permintaan/$requestId"
+    }
+
+    // 4. Alur Admin
     object HomeAdmin : Screen("home_admin")
-    object VerifikasiPendonor : Screen("verifikasi_pendonor/{id}") {
-        fun createRoute(id: String) = "verifikasi_pendonor/$id"
+    // membuat halaman Login Admin terpisah (mungkin)
+    object LoginAdmin : Screen("login_admin")
+    object DetailVerifikasi : Screen("detail_verifikasi/{requestId}") {
+        fun createRoute(requestId: String) = "detail_verifikasi/$requestId"
     }
-    object KonfirmasiDonor : Screen("konfirmasi_donor/{id}") {
-        fun createRoute(id: String) = "konfirmasi_donor/$id"
-    }
+    object SelesaiDonor : Screen("selesai_donor")
+
 }
