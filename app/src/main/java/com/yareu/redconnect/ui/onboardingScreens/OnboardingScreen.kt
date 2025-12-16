@@ -112,7 +112,7 @@ fun SplashScreenContent() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            // 1. Background putih
+            // Background putih
             .background(White),
         contentAlignment = Alignment.Center
     ) {
@@ -266,14 +266,6 @@ fun OnboardingPage2Preview() {
     }
 }
 
-@Preview(name = "Full Onboarding Flow", showBackground = true, showSystemUi = true)
-@Composable
-fun OnboardingScreenPreview() {
-    RedConnectTheme {
-        OnboardingScreen()
-    }
-}
-
 @Preview(name = "Onboarding Page 3", showBackground = true, showSystemUi = true)
 @Composable
 fun OnboardingPage3Preview() {
@@ -287,5 +279,13 @@ fun OnboardingPage3Preview() {
                 )
             )
         }
+    }
+}
+
+@Preview(name = "Full Onboarding Flow", showBackground = true, showSystemUi = true)
+@Composable
+fun OnboardingScreenPreview() {
+    RedConnectTheme {
+        OnboardingScreen()
     }
 }

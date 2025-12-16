@@ -4,22 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.yareu.redconnect.data.EmergencyRequest // Import data class
+import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.UserRole
 import com.yareu.redconnect.navigations.Screen
 import com.yareu.redconnect.ui.admin.*
 import com.yareu.redconnect.ui.auth.AuthScreen
 import com.yareu.redconnect.ui.onboardingScreens.OnboardingScreen
-import com.yareu.redconnect.ui.pendonor.*
 import com.yareu.redconnect.ui.pemohon.*
+import com.yareu.redconnect.ui.pendonor.*
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             RedConnectTheme {
@@ -27,14 +30,13 @@ class MainActivity : ComponentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = Screen.Onboarding.route // Aplikasi dimulai dari Onboarding
+                    startDestination = Screen.Onboarding.route
                 ) {
 
                     // ALUR AWAL
                     composable(Screen.Onboarding.route) {
                         OnboardingScreen(
                             onOnboardingFinished = {
-                                // Setelah onboarding selesai, hapus dari back stack dan pergi ke Auth
                                 navController.navigate(Screen.Auth.route) {
                                     popUpTo(Screen.Onboarding.route) { inclusive = true }
                                 }
@@ -44,12 +46,12 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.Auth.route) {
                         AuthScreen(
-                            // Logika navigasi setelah login/register
+                            onSecretAdminLogin = {
+                                navController.navigate(Screen.LoginAdmin.route)
+                            },
                             onRegisterClick = { role ->
-                                // Navigasi berdasarkan peran yang dipilih saat mendaftar
                                 val destination = if (role == UserRole.PEMOHON) Screen.HomePemohon.route else Screen.HomePendonor.route
                                 navController.navigate(destination) {
-                                    // Hapus semua history sebelumnya agar tidak bisa kembali ke halaman login
                                     popUpTo(Screen.Auth.route) { inclusive = true }
                                 }
                             },
@@ -68,7 +70,6 @@ class MainActivity : ComponentActivity() {
                             onNavigate = { route -> navController.navigate(route) },
                             onSOSClick = { navController.navigate(Screen.FormSOS.route) },
                             onTrackDonorClick = {
-                                // NOTE: "dummy_req_id" akan diganti dengan ID asli dari ViewModel
                                 navController.navigate(Screen.LacakPendonor.createRoute("dummy_req_id"))
                             }
                         )
@@ -83,7 +84,6 @@ class MainActivity : ComponentActivity() {
                         FormSOSScreen(
                             onBackClick = { navController.popBackStack() },
                             onSubmit = {
-                                // NOTE: "dummy_req_id" akan diganti dengan ID asli dari ViewModel
                                 navController.navigate(Screen.LoadingSiaran.createRoute("dummy_req_id"))
                             }
                         )
@@ -96,7 +96,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable(Screen.LacakPendonor.route) {
-                        // Di sini kita akan mengambil data request dari ViewModel berdasarkan ID
                         LacakPendonorScreen(request = null, onBackClick = { navController.popBackStack() })
                     }
 
@@ -119,9 +118,8 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(Screen.DetailPermintaan.route) { backStackEntry ->
                         val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
-                        // Nanti data request diambil dari ViewModel berdasarkan requestId
                         DetailPermintaanScreen(
-                            request = EmergencyRequest(id = requestId), // Kirim data dummy dulu
+                            request = EmergencyRequest(id = requestId),
                             onBackClick = { navController.popBackStack() },
                             onAcceptClick = { /* Logika Terima */ },
                             onRejectClick = { navController.popBackStack() }
@@ -130,34 +128,41 @@ class MainActivity : ComponentActivity() {
 
 
                     // ALUR ADMIN
-                    // Rute login admin bisa dibuat terpisah dari Auth user biasa
-                    composable(Screen.LoginAdmin.route) { /* TODO: AdminLoginScreen() */ }
-
-                    composable(Screen.HomeAdmin.route) {
-                        HomeAdminScreen(
-                            onNavigate = { route ->
-                                // Navigasi khusus dari dalam HomeAdmin
-                                if (route.startsWith("detail_verifikasi")) {
-                                    navController.navigate(route)
-                                } else if (route == "login") { // Jika logout
-                                    navController.navigate(Screen.Auth.route) {
-                                        popUpTo(Screen.HomeAdmin.route){ inclusive = true }
-                                    }
+                    composable(Screen.LoginAdmin.route) {
+                        AdminLoginScreen(
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
+                            onLoginClick = { id, password ->
+                                navController.navigate(Screen.HomeAdmin.route) {
+                                    popUpTo(Screen.Auth.route) { inclusive = true }
                                 }
                             }
                         )
                     }
+
+                    composable(Screen.HomeAdmin.route) {
+                        HomeAdminScreen(
+                            onNavigate = { route ->
+                                // Navigasi dari HomeAdmin ke halaman lain
+                                navController.navigate(route)
+                            }
+                        )
+                    }
+
+                    // Kita akan gunakan rute yang ada di NavGraph
                     composable(Screen.DetailVerifikasi.route) {
                         DetailVerifikasiScreen(
                             onBackClick = { navController.popBackStack() },
-                            onConfirmClick = { navController.navigate(Screen.SelesaiDonor.route) }
+                            onConfirmClick = { navController.navigate(Screen.SelesaiDonor.route) },
+                            onRejectClick = { navController.popBackStack() } // Menolak dan kembali
                         )
                     }
+
                     composable(Screen.SelesaiDonor.route) {
                         SelesaiDonorScreen(
                             onFinish = {
                                 navController.navigate(Screen.HomeAdmin.route) {
-                                    // Hapus semua backstack sampai HomeAdmin
                                     popUpTo(Screen.HomeAdmin.route) { inclusive = true }
                                 }
                             }

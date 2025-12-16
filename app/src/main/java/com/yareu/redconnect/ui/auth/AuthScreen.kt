@@ -26,6 +26,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.yareu.redconnect.R
 import com.yareu.redconnect.ui.components.buttons.PrimaryButton
 import com.yareu.redconnect.ui.components.inputs.DropdownBloodType
@@ -38,11 +41,15 @@ import com.yareu.redconnect.data.UserRole
 
 @Composable
 fun AuthScreen(
+    onSecretAdminLogin: () -> Unit = {},
     onLoginClick: (UserRole) -> Unit = {},
     onRegisterClick: (UserRole) -> Unit = {}
 ) {
     var selectedRole by remember { mutableStateOf(UserRole.PEMOHON) } // Default ke Pemohon
     var selectedTab by remember { mutableIntStateOf(0) } // 0 untuk Daftar, 1 untuk Masuk
+
+    var logoClickCount by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -60,7 +67,23 @@ fun AuthScreen(
             Image(
                 painter = painterResource(id = R.drawable.redconnect_logo),
                 contentDescription = "RedConnect Logo",
-                modifier = Modifier.height(100.dp),
+                modifier = Modifier
+                    .height(100.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        logoClickCount++
+                        if (logoClickCount == 5) {
+                            onSecretAdminLogin() // Jalankan fungsi navigasi ke login admin
+                            logoClickCount = 0 // Reset hitungan
+                        }
+                        // Reset hitungan jika user berhenti mengklik selama 2 detik
+                        scope.launch {
+                            delay(2000)
+                            logoClickCount = 0
+                        }
+                    },
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(BurgundyPrimary)
             )
