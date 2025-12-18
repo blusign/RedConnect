@@ -34,13 +34,13 @@ import com.yareu.redconnect.ui.components.buttons.PrimaryButton
 import com.yareu.redconnect.ui.components.inputs.DropdownBloodType
 import com.yareu.redconnect.ui.components.inputs.TextFieldStandard
 import com.yareu.redconnect.ui.theme.*
-import androidx.compose.ui.graphics.Color
-
-// Menggunakan enum dari User.kt agar konsisten
-import com.yareu.redconnect.data.UserRole
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yareu.redconnect.data.UserRole // Menggunakan enum dari User.kt
 
 @Composable
 fun AuthScreen(
+    authViewModel: AuthViewModel = viewModel(), // MEMBUAT INSTANCE VIEWMODEL
     onSecretAdminLogin: () -> Unit = {},
     onLoginClick: (UserRole) -> Unit = {},
     onRegisterClick: (UserRole) -> Unit = {}
@@ -75,7 +75,7 @@ fun AuthScreen(
                     ) {
                         logoClickCount++
                         if (logoClickCount == 5) {
-                            onSecretAdminLogin() // Jalankan fungsi navigasi ke login admin
+                            onSecretAdminLogin() // Menjalankan fungsi navigasi ke login admin
                             logoClickCount = 0 // Reset hitungan
                         }
                         // Reset hitungan jika user berhenti mengklik selama 2 detik
@@ -164,7 +164,11 @@ fun AuthScreen(
                 .padding(24.dp)
         ) {
             if (selectedTab == 0) { // Form Daftar
-                RegisterForm(role = selectedRole, onRegisterClick = { onRegisterClick(selectedRole) })
+                RegisterForm(
+                    role = selectedRole,
+                    authViewModel = authViewModel, // PASS VIEWMODEL
+                    onRegisterSuccess = { onRegisterClick(selectedRole) } // PASS CALLBACK
+                )
             } else { // Form Masuk
                 LoginForm(onLoginClick = { onLoginClick(selectedRole) })
             }
@@ -175,21 +179,52 @@ fun AuthScreen(
 }
 
 @Composable
-fun RegisterForm(role: UserRole, onRegisterClick: () -> Unit) {
+fun RegisterForm(
+    role: UserRole,
+    authViewModel: AuthViewModel, // ERIMA VIEWMODEL
+    onRegisterSuccess: () -> Unit // TERIMA CALLBACK
+) {
     // State untuk form
     var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var bloodType by remember { mutableStateOf("Pilih Golongan Darah") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    // State untuk loading dan error
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+
     Column {
-        Column {
-            SectionTitle("Nama Lengkap")
-            TextFieldStandard(value = name, onValueChange = { name = it }, label = "Masukkan nama lengkap")
+        // Tampilkan pesan error jika ada
+        AnimatedVisibility(visible = errorMessage != null) {
+            Text(
+                text = errorMessage ?: "",
+                color = ErrorRed,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
         }
 
-        Spacer(Modifier.height(16.dp)) // Jarak antar grup
+
+        Column {
+            SectionTitle("Nama Lengkap")
+            TextFieldStandard(value = name, onValueChange = { name = it }, label = "Masukkan nama lengkap", enabled = !isLoading)
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Grup Email
+        Column {
+            SectionTitle("Email")
+            TextFieldStandard(value = email, onValueChange = { email = it }, label = "Masukkan alamat email", keyboardType = KeyboardType.Email, enabled = !isLoading)
+        }
+
+        Spacer(Modifier.height(16.dp))
 
         // Grup Golongan Darah (Hanya untuk Pendonor)
         AnimatedVisibility(visible = role == UserRole.DONOR) {
@@ -205,7 +240,7 @@ fun RegisterForm(role: UserRole, onRegisterClick: () -> Unit) {
         // Grup Nomor HP
         Column {
             SectionTitle("Nomor HP")
-            TextFieldStandard(value = phone, onValueChange = { phone = it }, label = "Contoh: 081234567890", keyboardType = KeyboardType.Phone)
+            TextFieldStandard(value = phone, onValueChange = { phone = it }, label = "Contoh: 081234567890", keyboardType = KeyboardType.Phone, enabled = !isLoading)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -213,7 +248,7 @@ fun RegisterForm(role: UserRole, onRegisterClick: () -> Unit) {
         // Grup Alamat
         Column {
             SectionTitle("Alamat/Lokasi")
-            TextFieldStandard(value = address, onValueChange = { address = it }, label = "Masukkan alamat Anda")
+            TextFieldStandard(value = address, onValueChange = { address = it }, label = "Masukkan alamat Anda", enabled = !isLoading)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -221,7 +256,7 @@ fun RegisterForm(role: UserRole, onRegisterClick: () -> Unit) {
         // Grup Kata Sandi
         Column {
             SectionTitle("Buat Kata Sandi")
-            TextFieldStandard(value = password, onValueChange = { password = it }, label = "Minimal 8 karakter", isPassword = true)
+            TextFieldStandard(value = password, onValueChange = { password = it }, label = "Minimal 6 karakter", isPassword = true, enabled = !isLoading)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -229,27 +264,51 @@ fun RegisterForm(role: UserRole, onRegisterClick: () -> Unit) {
         // Grup Upload KTP (Hanya untuk Pendonor)
         AnimatedVisibility(visible = role == UserRole.DONOR) {
             Column {
-                SectionTitle("Upload KTP")
+                SectionTitle("Upload KTP (Opsional)")
                 UploadKtpField()
                 Spacer(Modifier.height(16.dp))
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        PrimaryButton(text = "Daftar Akun", onClick = onRegisterClick)
+        PrimaryButton(
+            text = if (isLoading) "Memproses..." else "Daftar Akun",
+            onClick = {
+                isLoading = true
+                errorMessage = null
+                authViewModel.registerUser(
+                    email = email,
+                    password = password,
+                    name = name,
+                    role = role,
+                    bloodType = bloodType,
+                    phoneNumber = phone,
+                    address = address,
+                    onSuccess = {
+                        isLoading = false
+                        onRegisterSuccess() // Panggil navigasi jika sukses
+                    },
+                    onError = { errorMsg ->
+                        isLoading = false
+                        errorMessage = errorMsg // Tampilkan pesan error
+                    }
+                )
+            },
+            enabled = !isLoading // Tombol dinonaktifkan saat loading
+        )
     }
 }
 
 @Composable
 fun LoginForm(onLoginClick: () -> Unit) {
-    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     Column {
-        // Grup Nomor HP
+        // Grup Email
         Column {
-            SectionTitle("Nomor HP")
-            TextFieldStandard(value = phone, onValueChange = { phone = it }, label = "Masukkan nomor HP terdaftar", keyboardType = KeyboardType.Phone)
+            SectionTitle("Email")
+            TextFieldStandard(value = email, onValueChange = { email = it }, label = "Masukkan email terdaftar", keyboardType = KeyboardType.Email)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -288,7 +347,9 @@ fun RoleCard(
     val borderColor = if (isSelected) PinkAccent else LightGray
 
     Card(
-        modifier = modifier.height(100.dp).clickable(onClick = onClick),
+        modifier = modifier
+            .height(100.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         border = BorderStroke(1.dp, borderColor),
@@ -340,36 +401,18 @@ fun UploadKtpField() {
                     contentDescription = null,
                     tint = Gray
                 )
-                Text("Klik untuk upload file", fontSize = 12.sp, color = Gray)
-                Text("PNG, JPG (MAX. 2MB)", fontSize = 10.sp, color = Gray)
+                Text("Klik untuk upload file", fontSize = 14.sp, color = Gray)
             }
         }
     }
 }
 
-@Preview(showBackground = true, name = "Register - Pemohon")
+
+@Preview(name="Auth Screen", showSystemUi = true, showBackground = true)
 @Composable
-fun AuthScreenRequesterRegisterPreview() {
+private fun AuthScreenPreview() {
     RedConnectTheme {
         AuthScreen()
     }
 }
-
-@Preview(showBackground = true, name = "Login - Pendonor")
-@Composable
-fun AuthScreenDonorLoginPreview() {
-    RedConnectTheme {
-        // Untuk menampilkan preview state yang berbeda
-        var selectedRole by remember { mutableStateOf(UserRole.DONOR) }
-        var selectedTab by remember { mutableIntStateOf(1) } // 1 = Login
-
-        // Tampilan parsial untuk preview
-        Column(Modifier.background(White)) {
-            if (selectedTab == 0) {
-                RegisterForm(role = selectedRole, onRegisterClick = {})
-            } else {
-                LoginForm(onLoginClick = {})
-            }
-        }
-    }
-}
+    
