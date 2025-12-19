@@ -8,12 +8,33 @@ import com.yareu.redconnect.data.User
 import com.yareu.redconnect.data.UserRole
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class AuthViewModel : ViewModel() {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val _userProfile = MutableStateFlow<User?>(null)
+    val userProfile: StateFlow<User?> = _userProfile
 
+    init {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            fetchUserData(currentUser.uid)
+        }
+    }
+
+    private fun fetchUserData(uid: String) {
+        viewModelScope.launch {
+            try {
+                val doc = firestore.collection("users").document(uid).get().await()
+                _userProfile.value = doc.toObject(User::class.java)
+            } catch (e: Exception) {
+                _userProfile.value = null
+            }
+        }
+    }
     // Fungsi untuk mendaftarkan pengguna baru
     fun registerUser(
         email: String, // memakai email untuk login
@@ -39,7 +60,7 @@ class AuthViewModel : ViewModel() {
                         name = name,
                         email = email,
                         role = role,
-                        bloodType = if (role == UserRole.DONOR) bloodType else "",
+                        bloodType = if (role == UserRole.PENDONOR) bloodType else "",
                         phoneNumber = phoneNumber,
                         address = address,
                         isAvailable = true // Default untuk pendonor
@@ -59,5 +80,64 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
+
+    fun loginUser(
+        email: String,
+        password: String,
+        expectedRole: UserRole,
+        onSuccess: (User) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val result = auth.signInWithEmailAndPassword(email, password).await()
+                val uid = result.user?.uid
+                if (uid != null) {
+                    val doc = firestore.collection("users").document(uid).get().await()
+                    val user = doc.toObject(User::class.java)
+
+                    if (user != null) {
+                        if (user.role == expectedRole) {
+                            _userProfile.value = user
+                            onSuccess(user)
+                        } else {
+                            auth.signOut() // Paksa logout karena role tidak sesuai tab yang dipilih
+                            onError("Akun ini terdaftar sebagai ${user.role}, bukan $expectedRole")
+                        }
+                    } else {
+                        onError("Data user tidak ditemukan di database")
+                    }
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Login Gagal")
+            }
+        }
+    }
+
+    fun resetPassword(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onError(it.message ?: "Gagal kirim email") }
+    }
+
+    fun logout() {
+        auth.signOut()
+        _userProfile.value = null // Bersihkan data di aplikasi
+    }
+
+    fun updateAvailability(isAvailable: Boolean) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                firestore.collection("users").document(uid)
+                    .update("isAvailable", isAvailable).await()
+                // Update state lokal juga agar UI berubah
+                _userProfile.value = _userProfile.value?.copy(isAvailable = isAvailable)
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
 }
     

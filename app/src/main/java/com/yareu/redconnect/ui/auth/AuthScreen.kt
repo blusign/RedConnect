@@ -115,8 +115,8 @@ fun AuthScreen(
             RoleCard(
                 role = "Pendonor",
                 icon = R.drawable.ic_donor,
-                isSelected = selectedRole == UserRole.DONOR,
-                onClick = { selectedRole = UserRole.DONOR },
+                isSelected = selectedRole == UserRole.PENDONOR,
+                onClick = { selectedRole = UserRole.PENDONOR },
                 modifier = Modifier.weight(1f)
             )
             RoleCard(
@@ -170,7 +170,13 @@ fun AuthScreen(
                     onRegisterSuccess = { onRegisterClick(selectedRole) } // PASS CALLBACK
                 )
             } else { // Form Masuk
-                LoginForm(onLoginClick = { onLoginClick(selectedRole) })
+                LoginForm(
+                    role = selectedRole,
+                    authViewModel = authViewModel,
+                    onLoginSuccess = { role ->
+                        onLoginClick(role)
+                    }
+                )
             }
 
             Spacer(Modifier.height(50.dp))
@@ -227,7 +233,7 @@ fun RegisterForm(
         Spacer(Modifier.height(16.dp))
 
         // Grup Golongan Darah (Hanya untuk Pendonor)
-        AnimatedVisibility(visible = role == UserRole.DONOR) {
+        AnimatedVisibility(visible = role == UserRole.PENDONOR) {
             Column {
                 SectionTitle("Golongan Darah")
                 DropdownBloodType(
@@ -262,7 +268,7 @@ fun RegisterForm(
         Spacer(Modifier.height(16.dp))
 
         // Grup Upload KTP (Hanya untuk Pendonor)
-        AnimatedVisibility(visible = role == UserRole.DONOR) {
+        AnimatedVisibility(visible = role == UserRole.PENDONOR) {
             Column {
                 SectionTitle("Upload KTP (Opsional)")
                 UploadKtpField()
@@ -300,27 +306,73 @@ fun RegisterForm(
 }
 
 @Composable
-fun LoginForm(onLoginClick: () -> Unit) {
+fun LoginForm(
+    role: UserRole,
+    authViewModel: AuthViewModel = viewModel(),
+    onLoginSuccess: (UserRole) -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column {
-        // Grup Email
-        Column {
-            SectionTitle("Email")
-            TextFieldStandard(value = email, onValueChange = { email = it }, label = "Masukkan email terdaftar", keyboardType = KeyboardType.Email)
+        if (errorMessage != null) {
+            Text(errorMessage!!, color = ErrorRed, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
+
+        SectionTitle("Email")
+        TextFieldStandard(value = email, onValueChange = { email = it }, label = "Masukkan email", keyboardType = KeyboardType.Email)
 
         Spacer(Modifier.height(16.dp))
 
-        // Grup Kata Sandi
-        Column {
-            SectionTitle("Kata Sandi")
-            TextFieldStandard(value = password, onValueChange = { password = it }, label = "Masukkan kata sandi Anda", isPassword = true)
-        }
+        SectionTitle("Kata Sandi")
+        TextFieldStandard(value = password, onValueChange = { password = it }, label = "Masukkan kata sandi", isPassword = true)
 
-        Spacer(Modifier.height(24.dp)) // Jarak lebih besar sebelum tombol
-        PrimaryButton(text = "Masuk", onClick = onLoginClick)
+        // FITUR LUPA PASSWORD
+        Text(
+            text = "Lupa Password?",
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .clickable {
+                    if (email.isNotEmpty()) {
+                        authViewModel.resetPassword(email,
+                            onSuccess = { /* Bisa tambah Toast "Email Terkirim" */ },
+                            onError = { errorMessage = it }
+                        )
+                    } else {
+                        errorMessage = "Masukkan email dulu untuk reset password"
+                    }
+                },
+            color = BurgundyPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        PrimaryButton(
+            text = if (isLoading) "Memproses..." else "Masuk",
+            onClick = {
+                isLoading = true
+                errorMessage = null // Reset error sebelum mencoba
+
+                authViewModel.loginUser(
+                    email = email,
+                    password = password,
+                    expectedRole = role,
+                    onSuccess = { user ->
+                        isLoading = false
+                        onLoginSuccess(user.role)
+                    },
+                    onError = { errorMsg ->
+                        isLoading = false
+                        errorMessage = errorMsg
+                    }
+                )
+            },
+            enabled = !isLoading
+        )
     }
 }
 

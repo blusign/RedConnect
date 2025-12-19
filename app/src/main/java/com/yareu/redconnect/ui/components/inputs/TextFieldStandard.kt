@@ -13,6 +13,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.ui.theme.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun TextFieldStandard(
@@ -27,6 +33,8 @@ fun TextFieldStandard(
     isError: Boolean = false,
     errorMessage: String = ""
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = value,
@@ -34,10 +42,22 @@ fun TextFieldStandard(
             label = { Text(label) },
             placeholder = { Text(placeholder) },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = if (isPassword) {
+            visualTransformation = if (isPassword && !passwordVisible) {
                 PasswordVisualTransformation()
             } else {
                 VisualTransformation.None
+            },
+            trailingIcon = {
+                if (isPassword) {
+                    val image = if (passwordVisible)
+                        Icons.Filled.Visibility
+                    else
+                        Icons.Filled.VisibilityOff
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = null)
+                    }
+                }
             },
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             enabled = enabled,

@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,7 +23,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R // Pastikan import R benar
+import com.yareu.redconnect.navigations.Screen
+import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
 import com.yareu.redconnect.ui.theme.*
 import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
@@ -31,8 +36,11 @@ import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
 fun ProfilPemohonScreen(
     onNavigate: (String) -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    onEditProfileClick: () -> Unit = {}
+    onEditProfileClick: () -> Unit = {},
+    authViewModel: AuthViewModel = viewModel()
 ) {
+    val userProfile by authViewModel.userProfile.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,19 +66,18 @@ fun ProfilPemohonScreen(
             // Bagian Header Profil
             Spacer(Modifier.height(24.dp))
             ProfileHeader(
-                name = "Citra Anindya",
-                email = "citra.a@email.com",
+                name = userProfile?.name ?: "Memuat...",
+                email = userProfile?.email ?: "",
                 onEditClick = { /*TODO*/ }
             )
             Spacer(Modifier.height(24.dp))
 
             // Container untuk sisa konten
             Column(Modifier.padding(horizontal = 16.dp)) {
-                // Kartu Data Diri
                 SectionCard(title = "Data Diri") {
-                    InfoRow(label = "Nama", value = "Citra Anindya")
-                    InfoRow(label = "Nomor HP", value = "+62 898 7654 3210")
-                    InfoRow(label = "Alamat", value = "Kota Yogyakarta")
+                    InfoRow(label = "Nama", value = userProfile?.name ?: "-")
+                    InfoRow(label = "Nomor HP", value = userProfile?.phoneNumber ?: "-")
+                    InfoRow(label = "Alamat", value = userProfile?.address ?: "-")
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -92,7 +99,10 @@ fun ProfilPemohonScreen(
 
             // Tombol Logout
             OutlinedButton(
-                onClick = onLogoutClick,
+                onClick = {
+                    authViewModel.logout() // Panggil fungsi logout di ViewModel
+                    onNavigate(Screen.Auth.route) // Navigasi ke layar login
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)

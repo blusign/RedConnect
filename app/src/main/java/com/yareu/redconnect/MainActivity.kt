@@ -46,17 +46,14 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.Auth.route) {
                         AuthScreen(
-                            onSecretAdminLogin = {
-                                navController.navigate(Screen.LoginAdmin.route)
-                            },
+                            onSecretAdminLogin = { navController.navigate(Screen.LoginAdmin.route) },
                             onRegisterClick = { role ->
                                 val destination = if (role == UserRole.PEMOHON) Screen.HomePemohon.route else Screen.HomePendonor.route
-                                navController.navigate(destination) {
-                                    popUpTo(Screen.Auth.route) { inclusive = true }
-                                }
+                                navController.navigate(destination) { popUpTo(Screen.Auth.route) { inclusive = true } }
                             },
-                            onLoginClick = { role ->
-                                val destination = if (role == UserRole.PEMOHON) Screen.HomePemohon.route else Screen.HomePendonor.route
+                            onLoginClick = { roleFromDb ->
+                                // navigasi berdasarkan data ASLI di Firebase
+                                val destination = if (roleFromDb == UserRole.PEMOHON) Screen.HomePemohon.route else Screen.HomePendonor.route
                                 navController.navigate(destination) {
                                     popUpTo(Screen.Auth.route) { inclusive = true }
                                 }

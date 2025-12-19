@@ -1,5 +1,6 @@
 package com.yareu.redconnect.ui.pendonor
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,7 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
+import com.yareu.redconnect.navigations.Screen
+import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.cards.PersonalInfoCard
 import com.yareu.redconnect.ui.theme.*
 import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
@@ -31,8 +37,11 @@ import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
 fun ProfilPendonorScreen(
     onNavigate: (String) -> Unit = {},
     onLogoutClick: () -> Unit = {},
+    authViewModel: AuthViewModel = viewModel(),
     onEditProfileClick: () -> Unit = {}
 ) {
+    val userProfile by authViewModel.userProfile.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,20 +67,19 @@ fun ProfilPendonorScreen(
             // Bagian Header Profil
             Spacer(Modifier.height(24.dp))
             ProfileHeader(
-                name = "Budi Hartono",
-                email = "budi.h@email.com",
+                name = userProfile?.name ?: "Memuat...",
+                email = userProfile?.email ?: "",
                 onEditClick = { /*TODO*/ }
             )
             Spacer(Modifier.height(24.dp))
 
             // Container untuk sisa konten
             Column(Modifier.padding(horizontal = 16.dp)) {
-                // Kartu Data Diri
                 SectionCard(title = "Data Diri") {
-                    InfoRow(label = "Nama", value = "Budi Hartono")
-                    InfoRow(label = "Nomor HP", value = "+62 812 3456 7890")
-                    InfoRow(label = "Golongan Darah", value = "A+")
-                    InfoRow(label = "Alamat", value = "Kecamatan Setiabudi")
+                    InfoRow(label = "Nama", value = userProfile?.name ?: "-")
+                    InfoRow(label = "Nomor HP", value = userProfile?.phoneNumber ?: "-")
+                    InfoRow(label = "Golongan Darah", value = userProfile?.bloodType ?: "-")
+                    InfoRow(label = "Alamat", value = userProfile?.address ?: "-")
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -120,14 +128,17 @@ fun ProfilPendonorScreen(
 
             // Tombol Logout
             OutlinedButton(
-                onClick = onLogoutClick,
+                onClick = {
+                    // Kita akan buat fungsi logout di ViewModel
+                    authViewModel.logout()
+                    onNavigate(Screen.Auth.route) // Balik ke layar login
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
                     .height(56.dp),
-                border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ErrorRed))
+                border = BorderStroke(1.dp, ErrorRed)
             ) {
-                Icon(Icons.Default.Logout, contentDescription = "Logout", tint = ErrorRed)
+                Icon(Icons.Default.Logout, contentDescription = null, tint = ErrorRed)
                 Spacer(Modifier.width(8.dp))
                 Text("Keluar", color = ErrorRed, fontWeight = FontWeight.Bold)
             }

@@ -4,7 +4,7 @@ data class User(
     val id: String = "",
     val name: String = "",
     val email: String = "",
-    val role: UserRole = UserRole.DONOR,
+    val role: UserRole = UserRole.PENDONOR,
     val bloodType: String = "",
     val phoneNumber: String = "",
     val address: String = "",
@@ -12,7 +12,7 @@ data class User(
 )
 
 enum class UserRole {
-    DONOR,      // Pendonor
+    PENDONOR,      // Pendonor
     PEMOHON,    // Penerima/Pasien
     ADMIN       // Petugas Puskesmas
 }

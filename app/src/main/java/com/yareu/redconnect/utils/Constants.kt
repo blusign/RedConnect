@@ -2,12 +2,7 @@ package com.yareu.redconnect.utils
 
 object Constants {
     // Blood Types
-    val BLOOD_TYPES = listOf(
-        "A+", "A-",
-        "B+", "B-",
-        "O+", "O-",
-        "AB+", "AB-"
-    )
+    val BLOOD_TYPES = listOf("A", "B", "AB", "O")
 
     // Donation Settings
     const val DONATION_COOLDOWN_DAYS = 90
