@@ -215,7 +215,7 @@ fun AuthScreen(
 @Composable
 fun RegisterForm(
     role: UserRole,
-    authViewModel: AuthViewModel, // ERIMA VIEWMODEL
+    authViewModel: AuthViewModel, // TERIMA VIEWMODEL
     onRegisterSuccess: () -> Unit // TERIMA CALLBACK
 ) {
     // State untuk form
@@ -308,6 +308,10 @@ fun RegisterForm(
         PrimaryButton(
             text = if (isLoading) "Memproses..." else "Daftar Akun",
             onClick = {
+                if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty() || password.isEmpty() || (role == UserRole.PENDONOR && bloodType == "Pilih Golongan Darah")) {
+                    errorMessage = "Harap isi semua data dengan lengkap!"
+                    return@PrimaryButton
+                }
                 isLoading = true
                 errorMessage = null
                 authViewModel.registerUser(

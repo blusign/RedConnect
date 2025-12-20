@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -46,9 +48,11 @@ import com.yareu.redconnect.ui.components.cards.EmergencyRequestCard
 import com.yareu.redconnect.ui.components.cards.PersonalInfoCard
 import com.yareu.redconnect.ui.components.cards.StatusToggleCard
 import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
+import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.BlueAccent
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
 import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.Gray
 import com.yareu.redconnect.ui.theme.LightGray
 import com.yareu.redconnect.ui.theme.PinkAccent
 import com.yareu.redconnect.ui.theme.RedConnectTheme
@@ -58,26 +62,25 @@ import com.yareu.redconnect.ui.theme.White
 @Composable
 fun HomePendonorScreen(
     onNavigate: (String) -> Unit = {},
-    authViewModel: AuthViewModel = viewModel()
-    ) {
+    authViewModel: AuthViewModel = viewModel(),
+    sosViewModel: SOSViewModel = viewModel()
+) {
     val userProfile by authViewModel.userProfile.collectAsState()
     val isAvailable = userProfile?.isAvailable ?: true
 
-    // Sample data
-    val emergencyRequests = listOf(
-        EmergencyRequest(
-            bloodType = "A+",
-            facilityName = "RSUP Dr. Sardjito",
-            distance = "2.5 km",
-            timeAgo = "15 menit lalu"
-        ),
-        EmergencyRequest(
-            bloodType = "A+",
-            facilityName = "Klinik PMI Yogyakarta",
-            distance = "4.1 km",
-            timeAgo = "45 menit lalu"
-        )
-    )
+    // Ambil data dari Firestore lewat ViewModel
+    val allRequests by sosViewModel.emergencyRequests.collectAsState()
+
+    // Ambil data setiap kali layar dibuka
+    LaunchedEffect(Unit) {
+        sosViewModel.fetchEmergencyRequests()
+    }
+
+    // Hanya ambil yang goldarnya sama dan statusnya WAITING
+    val matchingRequests = allRequests.filter {
+        it.bloodType == userProfile?.bloodType &&
+                it.status == com.yareu.redconnect.data.RequestStatus.WAITING
+    }
 
     Scaffold(
         topBar = {
@@ -124,7 +127,7 @@ fun HomePendonorScreen(
             ) {
                 item { Spacer(modifier = Modifier.height(8.dp)) }
                 item {
-                    // 4. Ganti "Budi" jadi nama dari database
+                    // Ganti "Budi" jadi nama dari database
                     Text(
                         text = "Halo, ${userProfile?.name ?: "Pahlawan"}!",
                         fontSize = 22.sp,
@@ -142,7 +145,12 @@ fun HomePendonorScreen(
                     )
                 }
                 item {
-                    PersonalInfoCard()
+                    PersonalInfoCard(
+                        bloodType = userProfile?.bloodType ?: "-",
+                        totalDonations = 0,
+                        points = 0,
+                        status = if (isAvailable) "Siap Donor" else "Sedang Istirahat"
+                    )
                 }
                 item {
                     Text(
@@ -154,17 +162,31 @@ fun HomePendonorScreen(
                     )
                 }
 
-                items(emergencyRequests) { request ->
-                    EmergencyRequestCard(
-                        requesterName = request.requesterName,
-                        bloodType = request.bloodType,
-                        facilityName = request.facilityName,
-                        distance = "Terdekat", // Bisa diupdate dengan LocationUtils nanti
-                        timeAgo = com.yareu.redconnect.utils.DateUtils.getTimeAgo(request.createdAt),
-                        onDetailClick = {
-                            onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(request.id))
-                        }
-                    )
+                if (matchingRequests.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Belum ada permintaan yang cocok dengan golongan darah Anda.",
+                            color = Gray,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 48.dp)
+                        )
+                    }
+                } else {
+                    items(matchingRequests) { request ->
+                        EmergencyRequestCard(
+                            requesterName = request.requesterName,
+                            bloodType = request.bloodType,
+                            facilityName = request.facilityName,
+                            distance = "Terdekat",
+                            timeAgo = com.yareu.redconnect.utils.DateUtils.getTimeAgo(request.createdAt),
+                            onDetailClick = {
+                                onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(request.id))
+                            }
+                        )
+                    }
                 }
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }

@@ -109,7 +109,12 @@ class AuthViewModel : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                onError(e.message ?: "Login Gagal")
+                val friendlyMessage = when {
+                    e.message?.contains("invalid-credential") == true -> "Email atau password salah. Jika belum punya akun, silakan daftar."
+                    e.message?.contains("user-not-found") == true -> "Akun tidak ditemukan. Silakan daftar terlebih dahulu."
+                    else -> "Terjadi kesalahan. Pastikan koneksi internet stabil."
+                }
+                onError(friendlyMessage)
             }
         }
     }

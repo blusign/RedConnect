@@ -137,10 +137,10 @@ fun ProfilPendonorScreen(
                         .padding(bottom = 8.dp)
                 )
                 PersonalInfoCard(
-                    bloodType = "A+",
-                    totalDonations = 8,
-                    points = 850,
-                    status = "Donor Aktif"
+                    bloodType = userProfile?.bloodType ?: "-",
+                    totalDonations = 0,
+                    points = 0,
+                    status = if (userProfile?.isAvailable == true) "Aktif" else "Istirahat"
                 )
 
                 Spacer(Modifier.height(24.dp))
