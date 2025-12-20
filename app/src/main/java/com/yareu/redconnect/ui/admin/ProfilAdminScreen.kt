@@ -3,12 +3,26 @@ package com.yareu.redconnect.ui.admin
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +35,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.R
 import com.yareu.redconnect.ui.components.navigation.AdminBottomNavigationBar
-import com.yareu.redconnect.ui.theme.*
+import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.ErrorRed
+import com.yareu.redconnect.ui.theme.Gray
+import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.RedConnectTheme
+import com.yareu.redconnect.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

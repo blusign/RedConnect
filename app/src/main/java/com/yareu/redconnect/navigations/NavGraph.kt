@@ -20,7 +20,7 @@ sealed class Screen(val route: String) {
     }
 
     // 3. Alur Pendonor
-    object HomePendonor : Screen("home_donor")
+    object HomePendonor : Screen("home_pendonor")
     object PermintaanDarurat : Screen("permintaan_donor")
     object RiwayatDonor : Screen("riwayat_donor")
     object ProfilPendonor : Screen("profil_donor")

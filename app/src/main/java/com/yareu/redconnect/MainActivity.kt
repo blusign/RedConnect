@@ -8,14 +8,25 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.UserRole
 import com.yareu.redconnect.navigations.Screen
-import com.yareu.redconnect.ui.admin.*
+import com.yareu.redconnect.ui.admin.AdminLoginScreen
+import com.yareu.redconnect.ui.admin.DetailVerifikasiScreen
+import com.yareu.redconnect.ui.admin.HomeAdminScreen
+import com.yareu.redconnect.ui.admin.SelesaiDonorScreen
 import com.yareu.redconnect.ui.auth.AuthScreen
 import com.yareu.redconnect.ui.onboardingScreens.OnboardingScreen
-import com.yareu.redconnect.ui.pemohon.*
-import com.yareu.redconnect.ui.pendonor.*
+import com.yareu.redconnect.ui.pemohon.FormSOSScreen
+import com.yareu.redconnect.ui.pemohon.HomePemohonScreen
+import com.yareu.redconnect.ui.pemohon.LacakPendonorScreen
+import com.yareu.redconnect.ui.pemohon.LoadingSiaranScreen
+import com.yareu.redconnect.ui.pemohon.ProfilPemohonScreen
+import com.yareu.redconnect.ui.pemohon.RiwayatPermintaanScreen
+import com.yareu.redconnect.ui.pendonor.DetailPermintaanScreen
+import com.yareu.redconnect.ui.pendonor.HomePendonorScreen
+import com.yareu.redconnect.ui.pendonor.PermintaanDaruratScreen
+import com.yareu.redconnect.ui.pendonor.ProfilPendonorScreen
+import com.yareu.redconnect.ui.pendonor.RiwayatDonorScreen
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 
 class MainActivity : ComponentActivity() {
@@ -80,8 +91,8 @@ class MainActivity : ComponentActivity() {
                     composable(Screen.FormSOS.route) {
                         FormSOSScreen(
                             onBackClick = { navController.popBackStack() },
-                            onSubmit = {
-                                navController.navigate(Screen.LoadingSiaran.createRoute("dummy_req_id"))
+                            onSubmit = { requestId ->
+                                navController.navigate(Screen.LoadingSiaran.createRoute(requestId))
                             }
                         )
                     }
@@ -115,10 +126,14 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(Screen.DetailPermintaan.route) { backStackEntry ->
                         val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
+
                         DetailPermintaanScreen(
-                            request = EmergencyRequest(id = requestId),
+                            requestId = requestId, // Kirim ID saja
                             onBackClick = { navController.popBackStack() },
-                            onAcceptClick = { /* Logika Terima */ },
+                            onAcceptClick = {
+                                // Logika saat pendonor menekan Terima
+                                // navController.navigate(Screen.LacakPendonor.createRoute(requestId))
+                            },
                             onRejectClick = { navController.popBackStack() }
                         )
                     }

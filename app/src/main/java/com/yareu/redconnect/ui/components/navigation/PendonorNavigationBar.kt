@@ -5,12 +5,18 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yareu.redconnect.ui.theme.*
+import com.yareu.redconnect.ui.theme.BurgundyPrimary
+import com.yareu.redconnect.ui.theme.Gray
+import com.yareu.redconnect.ui.theme.White
 
 @Composable
 fun PendonorBottomNavigationBar(
@@ -23,8 +29,8 @@ fun PendonorBottomNavigationBar(
     ) {
         // Beranda
         NavigationBarItem(
-            selected = currentRoute == "home_donor",
-            onClick = { onNavigate("home_donor") },
+            selected = currentRoute == "home_pendonor",
+            onClick = { onNavigate("home_pendonor") },
             icon = { Icon(Icons.Default.Home, "Beranda") },
             label = { Text("Beranda", fontSize = 12.sp) },
             colors = navigationBarColors()

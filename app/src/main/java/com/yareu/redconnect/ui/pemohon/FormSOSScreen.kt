@@ -3,16 +3,36 @@ package com.yareu.redconnect.ui.pemohon
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,18 +42,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
-import com.yareu.redconnect.ui.theme.*
-import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
 import com.yareu.redconnect.ui.components.inputs.DropdownBloodType
 import com.yareu.redconnect.ui.components.inputs.TextFieldStandard
+import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
+import com.yareu.redconnect.ui.sos.SOSViewModel
+import com.yareu.redconnect.ui.theme.BurgundyPrimary
+import com.yareu.redconnect.ui.theme.DarkGray
+import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.Gray
+import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.PinkAccent
+import com.yareu.redconnect.ui.theme.RedConnectTheme
+import com.yareu.redconnect.ui.theme.White
 import com.yareu.redconnect.utils.Constants
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormSOSScreen(
     onBackClick: () -> Unit = {},
-    onSubmit: () -> Unit = {}
+    onSubmit: (String) -> Unit = {},
+    sosViewModel: SOSViewModel = viewModel()
 ) {
     var selectedBloodType by remember { mutableStateOf("") }
     var bloodBags by remember { mutableIntStateOf(1) }
@@ -41,6 +71,8 @@ fun FormSOSScreen(
     var patientName by remember { mutableStateOf("") }
     var relationship by remember { mutableStateOf("") }
     var urgencyLevel by remember { mutableStateOf("Tinggi") }
+
+    var isLoading by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -132,15 +164,37 @@ fun FormSOSScreen(
 
             // Tombol Kirim SOS
             Button(
-                onClick = onSubmit,
+                onClick = {
+                    isLoading = true
+                    sosViewModel.sendSOSRequest(
+                        patientName = patientName,
+                        bloodType = selectedBloodType,
+                        bloodBags = bloodBags,
+                        facilityName = facilityLocation,
+                        note = relationship,
+                        onSuccess = { requestId ->
+                            isLoading = false
+                            onSubmit(requestId) // Kirim ID ke MainActivity untuk navigasi
+                        },
+                        onError = { error ->
+                            isLoading = false
+                            // TODO: Tampilkan Toast error
+                        }
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PinkAccent),
                 shape = RoundedCornerShape(12.dp),
-                enabled = selectedBloodType.isNotEmpty() && facilityLocation.isNotEmpty() && patientName.isNotEmpty()
+                // Tombol mati jika sedang loading
+                enabled = !isLoading && selectedBloodType.isNotEmpty() && facilityLocation.isNotEmpty() && patientName.isNotEmpty()
             ) {
-                Text("Kirim Permintaan SOS", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (isLoading) "Mengirim..." else "Kirim Permintaan SOS",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

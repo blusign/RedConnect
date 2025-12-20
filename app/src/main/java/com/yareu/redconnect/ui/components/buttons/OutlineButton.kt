@@ -1,7 +1,8 @@
 package com.yareu.redconnect.ui.components.buttons
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
@@ -12,8 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yareu.redconnect.ui.theme.Gray
 import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.Gray
 
 @Composable
 fun OutlineButton(

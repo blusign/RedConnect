@@ -1,17 +1,32 @@
 package com.yareu.redconnect.ui.pemohon
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -20,8 +35,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.RequestStatus
-import com.yareu.redconnect.ui.theme.*
 import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
+import com.yareu.redconnect.ui.theme.BlueAccent
+import com.yareu.redconnect.ui.theme.BurgundyPrimary
+import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.ErrorRed
+import com.yareu.redconnect.ui.theme.Gray
+import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.RedConnectTheme
+import com.yareu.redconnect.ui.theme.SuccessGreen
+import com.yareu.redconnect.ui.theme.White
 
 // Data dummy untuk preview
 private val dummyRequestHistory = listOf(

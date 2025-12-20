@@ -1,14 +1,31 @@
 package com.yareu.redconnect.ui.admin
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,7 +36,15 @@ import androidx.compose.ui.unit.sp
 import com.yareu.redconnect.data.DonorResponse
 import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
-import com.yareu.redconnect.ui.theme.*
+import com.yareu.redconnect.ui.theme.DarkGray
+import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.ErrorRed
+import com.yareu.redconnect.ui.theme.Gray
+import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.RedConnectTheme
+import com.yareu.redconnect.ui.theme.SuccessGreen
+import com.yareu.redconnect.ui.theme.WarningYellow
+import com.yareu.redconnect.ui.theme.White
 
 @Composable
 fun DetailVerifikasiScreen(

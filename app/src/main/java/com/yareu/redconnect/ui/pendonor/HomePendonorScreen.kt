@@ -3,20 +3,33 @@ package com.yareu.redconnect.ui.pendonor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
@@ -27,11 +40,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
-import com.yareu.redconnect.ui.theme.*
-import com.yareu.redconnect.ui.components.cards.*
 import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.ui.auth.AuthViewModel
+import com.yareu.redconnect.ui.components.cards.EmergencyRequestCard
+import com.yareu.redconnect.ui.components.cards.PersonalInfoCard
+import com.yareu.redconnect.ui.components.cards.StatusToggleCard
 import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
+import com.yareu.redconnect.ui.theme.BlueAccent
+import com.yareu.redconnect.ui.theme.BurgundyPrimary
+import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.PinkAccent
+import com.yareu.redconnect.ui.theme.RedConnectTheme
+import com.yareu.redconnect.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +108,7 @@ fun HomePendonorScreen(
         },
         bottomBar = {
             PendonorBottomNavigationBar(
-                currentRoute = "home_donor",
+                currentRoute = "home_pendonor",
                 onNavigate = onNavigate
             )
         }
@@ -135,11 +156,14 @@ fun HomePendonorScreen(
 
                 items(emergencyRequests) { request ->
                     EmergencyRequestCard(
+                        requesterName = request.requesterName,
                         bloodType = request.bloodType,
                         facilityName = request.facilityName,
-                        distance = request.distance,
-                        timeAgo = request.timeAgo,
-                        onDetailClick = { /* TODO: Navigate */ }
+                        distance = "Terdekat", // Bisa diupdate dengan LocationUtils nanti
+                        timeAgo = com.yareu.redconnect.utils.DateUtils.getTimeAgo(request.createdAt),
+                        onDetailClick = {
+                            onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(request.id))
+                        }
                     )
                 }
 

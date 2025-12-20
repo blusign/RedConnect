@@ -5,17 +5,37 @@ import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.*
+import androidx.compose.material.icons.rounded.Whatsapp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,25 +44,43 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
-import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
-import com.yareu.redconnect.ui.theme.*
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.rounded.Whatsapp
+import com.yareu.redconnect.ui.sos.SOSViewModel
+import com.yareu.redconnect.ui.theme.BlueAccent
+import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.Gray
+import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.PinkAccent
+import com.yareu.redconnect.ui.theme.RedConnectTheme
+import com.yareu.redconnect.ui.theme.SuccessGreen
+import com.yareu.redconnect.ui.theme.White
 
 @Composable
 fun DetailPermintaanScreen(
-    request: EmergencyRequest, // Data permintaan akan dikirim dari layar sebelumnya
+    requestId: String,
     onBackClick: () -> Unit,
     onAcceptClick: () -> Unit,
-    onRejectClick: () -> Unit
+    onRejectClick: () -> Unit,
+    sosViewModel: SOSViewModel = viewModel()
 ) {
     val context = LocalContext.current
+
+    val requests by sosViewModel.emergencyRequests.collectAsState()
+
+    val request = requests.find { it.id == requestId }
+
+    // Jika data belum dimuat atau tidak ditemukan
+    if (request == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = PinkAccent)
+        }
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -105,10 +143,13 @@ fun DetailPermintaanScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        InfoRow(label = "Nama Penerima", value = request.requesterName)
-                        InfoRow(label = "Nomor HP", value = "+6281234567890") // Ganti dengan nomor HP asli dari request
+                        // 3. GUNAKAN DATA ASLI DARI FIREBASE
+                        InfoRow(label = "Nama Pasien", value = request.requesterName)
+                        InfoRow(label = "Golongan Darah", value = request.bloodType)
+                        InfoRow(label = "Jumlah Kantong", value = "${request.bloodBags} Kantong")
                         InfoRow(label = "Lokasi Tujuan", value = request.facilityName)
-                        InfoRow(label = "Alamat", value = request.facilityAddress, isVertical = true)
+                        // Note: Tambahkan field alamat jika ada di EmergencyRequest
+                        InfoRow(label = "Catatan", value = request.note.ifEmpty { "-" }, isVertical = true)
                     }
                 }
             }
@@ -207,29 +248,24 @@ fun DetailPermintaanScreen(
 
             // TOMBOL TOLAK & TERIMA
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Tombol Tolak
                 OutlinedButton(
                     onClick = onRejectClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
+                    modifier = Modifier.weight(1f).height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(2.dp, PinkAccent)
                 ) {
                     Text("TOLAK", color = PinkAccent, fontWeight = FontWeight.Bold)
                 }
 
-                // Tombol Terima
                 Button(
-                    onClick = onAcceptClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
+                    onClick = {
+                        // Nanti di sini panggil fungsi sosViewModel.acceptRequest(requestId)
+                        onAcceptClick()
+                    },
+                    modifier = Modifier.weight(1f).height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -275,21 +311,13 @@ private fun InfoRow(label: String, value: String, isVertical: Boolean = false) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun DetailPermintaanScreenPreview() {
-    // Data dummy untuk preview
-    val dummyRequest = EmergencyRequest(
-        id = "req_123",
-        requesterName = "Joko Susilo",
-        facilityName = "Puskesmas Mergangsan",
-        facilityAddress = "Jl. Sisingamangaraja No.45, Brontokusuman, Kec. Mergangsan, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55153"
-        // bisa ditambah yaw
-    )
-
     RedConnectTheme {
         DetailPermintaanScreen(
-            request = dummyRequest,
+            requestId = "req_123",
             onBackClick = {},
             onAcceptClick = {},
             onRejectClick = {}
         )
     }
 }
+
