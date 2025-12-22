@@ -1,5 +1,10 @@
 package com.yareu.redconnect.ui.pendonor
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,22 +42,27 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.LocationServices
 import com.yareu.redconnect.R
 import com.yareu.redconnect.navigations.Screen
 import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.cards.PersonalInfoCard
 import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
+import com.yareu.redconnect.ui.theme.BlueAccent
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
 import com.yareu.redconnect.ui.theme.DarkText
 import com.yareu.redconnect.ui.theme.ErrorRed
@@ -70,6 +81,19 @@ fun ProfilPendonorScreen(
     onEditProfileClick: () -> Unit = {}
 ) {
     val userProfile by authViewModel.userProfile.collectAsState()
+
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    // Launcher untuk memunculkan dialog izin GPS
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            // Jika diizinkan, langsung panggil fungsi ambil lokasi
+            Toast.makeText(context, "Izin diberikan, klik ikon 📍 sekali lagi", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -108,7 +132,44 @@ fun ProfilPendonorScreen(
                     InfoRow(label = "Nama", value = userProfile?.name ?: "-")
                     InfoRow(label = "Nomor HP", value = userProfile?.phoneNumber ?: "-")
                     InfoRow(label = "Golongan Darah", value = userProfile?.bloodType ?: "-")
-                    InfoRow(label = "Alamat", value = userProfile?.address ?: "-")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Alamat", fontSize = 14.sp, color = Gray)
+                            Text(userProfile?.address ?: "-", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DarkText)
+                        }
+
+                        // TOMBOL 📍
+                        IconButton(
+                            onClick = {
+                                val fineLocation = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                if (fineLocation == PackageManager.PERMISSION_GRANTED) {
+                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                        if (location != null) {
+                                            authViewModel.updateLocationToGps(location.latitude, location.longitude) {
+                                                android.widget.Toast.makeText(context, "Koordinat berhasil diperbarui!", android.widget.Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.background(BlueAccent.copy(alpha = 0.1f), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MyLocation,
+                                contentDescription = "Update GPS",
+                                tint = BlueAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))

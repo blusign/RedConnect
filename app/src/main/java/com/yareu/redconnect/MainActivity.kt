@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -98,13 +99,29 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(Screen.LoadingSiaran.route) { backStackEntry ->
                         val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
+
+                        val sosViewModel: com.yareu.redconnect.ui.sos.SOSViewModel =
+                            viewModel()
+
                         LoadingSiaranScreen(
-                            onDonorsFound = { navController.navigate(Screen.LacakPendonor.createRoute(requestId)) },
+                            requestId = requestId, // Pastikan parameter ini diterima di LoadingSiaranScreen
+                            sosViewModel = sosViewModel,
+                            onDonorsFound = {
+                                // Jika ditemukan pendonor, pindah ke layar Lacak
+                                navController.navigate(Screen.LacakPendonor.createRoute(requestId)) {
+                                    // Hapus loading dari tumpukan agar tidak bisa back ke loading lagi
+                                    popUpTo(Screen.LoadingSiaran.route) { inclusive = true }
+                                }
+                            },
                             onCancelClick = { navController.popBackStack() }
                         )
                     }
-                    composable(Screen.LacakPendonor.route) {
-                        LacakPendonorScreen(request = null, onBackClick = { navController.popBackStack() })
+                    composable(Screen.LacakPendonor.route) { backStackEntry ->
+                        val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
+                        LacakPendonorScreen(
+                            requestId = requestId,
+                            onBackClick = { navController.popBackStack() }
+                        )
                     }
 
 
@@ -131,8 +148,11 @@ class MainActivity : ComponentActivity() {
                             requestId = requestId, // Kirim ID saja
                             onBackClick = { navController.popBackStack() },
                             onAcceptClick = {
-                                // Logika saat pendonor menekan Terima
-                                // navController.navigate(Screen.LacakPendonor.createRoute(requestId))
+                                // Setelah terima, balik ke beranda atau daftar permintaan
+                                navController.navigate(Screen.HomePendonor.route) {
+                                    // Hapus tumpukan detail agar tidak bisa back ke detail lagi
+                                    popUpTo(Screen.HomePendonor.route) { inclusive = true }
+                                }
                             },
                             onRejectClick = { navController.popBackStack() }
                         )

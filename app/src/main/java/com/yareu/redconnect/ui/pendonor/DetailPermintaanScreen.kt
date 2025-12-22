@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -66,12 +67,16 @@ fun DetailPermintaanScreen(
     onBackClick: () -> Unit,
     onAcceptClick: () -> Unit,
     onRejectClick: () -> Unit,
-    sosViewModel: SOSViewModel = viewModel()
+    sosViewModel: SOSViewModel = viewModel(),
+    authViewModel: com.yareu.redconnect.ui.auth.AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        sosViewModel.fetchEmergencyRequests()
+    }
 
     val requests by sosViewModel.emergencyRequests.collectAsState()
-
+    val userProfile by authViewModel.userProfile.collectAsState()
     val request = requests.find { it.id == requestId }
 
     // Jika data belum dimuat atau tidak ditemukan
@@ -143,7 +148,7 @@ fun DetailPermintaanScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // 3. GUNAKAN DATA ASLI DARI FIREBASE
+                        // GUNAKAN DATA ASLI DARI FIREBASE
                         InfoRow(label = "Nama Pasien", value = request.requesterName)
                         InfoRow(label = "Golongan Darah", value = request.bloodType)
                         InfoRow(label = "Jumlah Kantong", value = "${request.bloodBags} Kantong")
@@ -194,17 +199,10 @@ fun DetailPermintaanScreen(
                 // Tombol Buka Maps
                 Button(
                     onClick = {
-                        val gmmIntentUri = Uri.parse("google.navigation:q=${request.facilityAddress}")
+                        val gmmIntentUri = Uri.parse("google.navigation:q=${request.latitude},${request.longitude}")
                         val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
                         mapIntent.setPackage("com.google.android.apps.maps")
-                        // Cek apakah aplikasi Google Maps terinstall
-                        if (mapIntent.resolveActivity(context.packageManager) != null) {
-                            context.startActivity(mapIntent)
-                        } else {
-                            // Fallback jika tidak ada, buka di browser
-                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${request.facilityAddress}"))
-                            context.startActivity(browserIntent)
-                        }
+                        context.startActivity(mapIntent)
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -220,11 +218,10 @@ fun DetailPermintaanScreen(
                 // Tombol Chat (WhatsApp)
                 Button(
                     onClick = {
-                        // Ganti nomor HP dengan data dari request
-                        val phoneNumber = "6281234567890"
-                        val message = "Halo, saya pendonor dari RedConnect dan bersedia membantu permintaan darah Anda."
+                        val phone = "6281234567890"
+                        val message = "Halo ${request.requesterName}, saya pendonor dari RedConnect bersedia membantu permintaan Anda di ${request.facilityName}."
                         val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse("https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encode(message)}")
+                            data = Uri.parse("https://api.whatsapp.com/send?phone=$phone&text=${Uri.encode(message)}")
                         }
                         context.startActivity(intent)
                     },
@@ -253,7 +250,9 @@ fun DetailPermintaanScreen(
             ) {
                 OutlinedButton(
                     onClick = onRejectClick,
-                    modifier = Modifier.weight(1f).height(56.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(2.dp, PinkAccent)
                 ) {
@@ -262,12 +261,28 @@ fun DetailPermintaanScreen(
 
                 Button(
                     onClick = {
-                        // Nanti di sini panggil fungsi sosViewModel.acceptRequest(requestId)
-                        onAcceptClick()
+                        val donor = userProfile
+                        if (donor != null) {
+                            sosViewModel.acceptRequest(
+                                requestId = requestId,
+                                donorProfile = donor,
+                                onSuccess = {
+                                    // Jika berhasil, navigasi (misal ke halaman Lacak/Sukses)
+                                    onAcceptClick()
+                                },
+                                onError = { error ->
+                                    // Tampilkan pesan error (bisa pakai Toast)
+                                    android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
                     },
-                    modifier = Modifier.weight(1f).height(56.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = userProfile != null // Tombol hanya aktif jika data user sudah dimuat
                 ) {
                     Text("TERIMA", fontWeight = FontWeight.Bold)
                 }
@@ -278,30 +293,29 @@ fun DetailPermintaanScreen(
 
 @Composable
 private fun InfoRow(label: String, value: String, isVertical: Boolean = false) {
-    Row(Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Gray,
-            modifier = Modifier.width(120.dp) // Lebar tetap untuk label
-        )
-        if (isVertical) {
-            // Untuk alamat yang panjang
+    if (isVertical) {
+        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            Text(label, fontSize = 13.sp, color = Gray)
+            Spacer(Modifier.height(4.dp))
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DarkText)
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp), // Beri jarak antar baris
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, fontSize = 14.sp, color = Gray, modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(16.dp)) // Beri jarak horizontal minimal
             Text(
                 text = value,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold, // Buat lebih tegas
                 color = DarkText,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 20.sp,
-                modifier = Modifier.weight(1f)
-            )
-        } else {
-            Text(
-                text = value,
-                fontSize = 14.sp,
-                color = DarkText,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f)
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                modifier = Modifier.weight(1.5f) // Beri ruang lebih luas untuk nilai
             )
         }
     }

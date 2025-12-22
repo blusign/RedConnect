@@ -144,5 +144,23 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    fun updateLocationToGps(lat: Double, lng: Double, onSuccess: () -> Unit) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                firestore.collection("users").document(uid)
+                    .update(mapOf(
+                        "latitude" to lat,
+                        "longitude" to lng
+                    )).await()
+
+                // Update local state
+                _userProfile.value = _userProfile.value?.copy(latitude = lat, longitude = lng)
+                onSuccess()
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
 }
     

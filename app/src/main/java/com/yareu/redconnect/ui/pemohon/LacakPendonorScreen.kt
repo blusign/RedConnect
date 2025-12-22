@@ -25,6 +25,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,10 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.data.DonorResponse
 import com.yareu.redconnect.data.DonorResponseStatus
-import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
+import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.BlueAccent
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
 import com.yareu.redconnect.ui.theme.DarkGray
@@ -49,9 +52,17 @@ import com.yareu.redconnect.ui.theme.White
 
 @Composable
 fun LacakPendonorScreen(
-    request: EmergencyRequest?,
+    requestId: String,
+    sosViewModel: SOSViewModel = viewModel(),
     onBackClick: () -> Unit = {}
 ) {
+    // Ambil semua request dari ViewModel
+    val allRequests by sosViewModel.emergencyRequests.collectAsState()
+
+    // Cari request yang spesifik berdasarkan ID
+    val request = allRequests.find { it.id == requestId }
+
+    // Ambil pendonor yang sudah mengonfirmasi (ACCEPTED/ON_WAY)
     val confirmedDonor = request?.respondingDonors?.firstOrNull {
         it.status == DonorResponseStatus.ON_WAY || it.status == DonorResponseStatus.ARRIVED
     }
@@ -230,17 +241,8 @@ fun PendonorTerpilihCard(donor: DonorResponse) {
 fun LacakPendonorScreenPreview() {
     RedConnectTheme {
         LacakPendonorScreen(
-            request = EmergencyRequest(
-                respondingDonors = listOf(
-                    DonorResponse(
-                        id = "1",
-                        donorName = "Budi Santoso",
-                        distance = "1.5 km",
-                        phoneNumber = "081234567890",
-                        status = DonorResponseStatus.ON_WAY
-                    )
-                )
-            )
+            requestId = "dummy_id"
         )
     }
 }
+

@@ -8,7 +8,9 @@ data class User(
     val bloodType: String = "",
     val phoneNumber: String = "",
     val address: String = "",
-    val isAvailable: Boolean = true
+    val isAvailable: Boolean = true,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
 )
 
 enum class UserRole {

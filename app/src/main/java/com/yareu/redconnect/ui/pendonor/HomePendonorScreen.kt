@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -19,6 +21,8 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
-import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.cards.EmergencyRequestCard
 import com.yareu.redconnect.ui.components.cards.PersonalInfoCard
@@ -78,8 +81,17 @@ fun HomePendonorScreen(
 
     // Hanya ambil yang goldarnya sama dan statusnya WAITING
     val matchingRequests = allRequests.filter {
-        it.bloodType == userProfile?.bloodType &&
+        val isCompatible = it.bloodType == userProfile?.bloodType &&
                 it.status == com.yareu.redconnect.data.RequestStatus.WAITING
+
+        val distance = com.yareu.redconnect.utils.LocationUtils.calculateDistance(
+            userProfile?.latitude ?: 0.0,
+            userProfile?.longitude ?: 0.0,
+            it.latitude,
+            it.longitude
+        )
+
+        isCompatible && distance <= 5000
     }
 
     Scaffold(
@@ -152,6 +164,44 @@ fun HomePendonorScreen(
                         status = if (isAvailable) "Siap Donor" else "Sedang Istirahat"
                     )
                 }
+
+                val acceptedRequest = allRequests.find { req ->
+                    req.status == com.yareu.redconnect.data.RequestStatus.ACCEPTED &&
+                            req.respondingDonors.any { it.donorId == userProfile?.id }
+                }
+
+                if (acceptedRequest != null) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            colors = CardDefaults.cardColors(containerColor = BlueAccent.copy(alpha = 0.1f)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, BlueAccent)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("🚑", fontSize = 24.sp)
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text("Tugas Aktif: Menolong ${acceptedRequest.requesterName}", fontWeight = FontWeight.Bold)
+                                    Text("Faskes: ${acceptedRequest.facilityName}", fontSize = 12.sp, color = Gray)
+                                }
+                                Text(
+                                    text = "LIHAT",
+                                    color = BlueAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.clickable {
+                                        onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(acceptedRequest.id))
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
                 item {
                     Text(
                         text = "Permintaan Darurat Terdekat",
@@ -176,11 +226,22 @@ fun HomePendonorScreen(
                     }
                 } else {
                     items(matchingRequests) { request ->
+                        // Simulasi koordinat (Nanti diambil dari GPS/Profile)
+                        val donorLat = userProfile?.latitude ?: -7.7956 // Contoh Jogja
+                        val donorLng = userProfile?.longitude ?: 110.3695
+
+                        // Asumsikan EmergencyRequest punya field lat/lng rumah sakit
+                        val distanceInMeters = com.yareu.redconnect.utils.LocationUtils.calculateDistance(
+                            donorLat, donorLng,
+                            request.latitude, request.longitude // Pastikan field ini ada di data class
+                        )
+                        val formattedDistance = com.yareu.redconnect.utils.LocationUtils.formatDistance(distanceInMeters)
+
                         EmergencyRequestCard(
                             requesterName = request.requesterName,
                             bloodType = request.bloodType,
                             facilityName = request.facilityName,
-                            distance = "Terdekat",
+                            distance = formattedDistance, // Jarak Dinamis
                             timeAgo = com.yareu.redconnect.utils.DateUtils.getTimeAgo(request.createdAt),
                             onDetailClick = {
                                 onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(request.id))

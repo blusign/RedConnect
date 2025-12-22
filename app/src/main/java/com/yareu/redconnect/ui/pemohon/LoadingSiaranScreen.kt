@@ -18,13 +18,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,29 +34,31 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yareu.redconnect.data.EmergencyRequest
-import com.yareu.redconnect.data.RequestStatus
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.DarkText
 import com.yareu.redconnect.ui.theme.Gray
 import com.yareu.redconnect.ui.theme.LightGray
 import com.yareu.redconnect.ui.theme.PinkAccent
 import com.yareu.redconnect.ui.theme.SuccessGreen
-import kotlinx.coroutines.delay
 
 @Composable
 fun LoadingSiaranScreen(
-    request: EmergencyRequest? = null,  // Terima data request
+    requestId: String,
+    sosViewModel: SOSViewModel = viewModel(),
     onDonorsFound: () -> Unit = {},
     onCancelClick: () -> Unit = {}
 ) {
-    // Ambil jumlah pendonor dari request
-    val donorCount = request?.respondingDonors?.size ?: 0
+    val allRequests by sosViewModel.emergencyRequests.collectAsState()
+    val currentRequest = allRequests.find { it.id == requestId }
 
-    // Simulasi, Monitor perubahan jumlah pendonor
-    LaunchedEffect(donorCount) {
-        if (donorCount > 0) {
-            delay(2000) // Kasih waktu user baca
-            onDonorsFound() // Auto navigate
+    // Ambil jumlah pendonor secara dinamis dari data Firestore
+    val donorCount = currentRequest?.respondingDonors?.size ?: 0
+
+    LaunchedEffect(currentRequest?.status) {
+        // Jika status berubah jadi ACCEPTED, berarti sudah ada pendonor
+        if (currentRequest?.status == com.yareu.redconnect.data.RequestStatus.ACCEPTED) {
+            onDonorsFound()
         }
     }
 
@@ -193,13 +195,11 @@ fun LoadingSiaranScreen(
 @Preview(showBackground = true)
 @Composable
 fun LoadingSiaranScreenPreview() {
-    MaterialTheme {
+    com.yareu.redconnect.ui.theme.RedConnectTheme {
         LoadingSiaranScreen(
-            request = EmergencyRequest(
-                bloodType = "O+",
-                bloodBags = 2,
-                status = RequestStatus.WAITING
-            )
+            requestId = "dummy_id",
+            onDonorsFound = {},
+            onCancelClick = {}
         )
     }
 }

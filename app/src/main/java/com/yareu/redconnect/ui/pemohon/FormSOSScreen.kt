@@ -37,11 +37,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
 import com.yareu.redconnect.ui.components.inputs.DropdownBloodType
@@ -71,8 +73,22 @@ fun FormSOSScreen(
     var patientName by remember { mutableStateOf("") }
     var relationship by remember { mutableStateOf("") }
     var urgencyLevel by remember { mutableStateOf("Tinggi") }
-
     var isLoading by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val fusedLocationClient = remember {
+        com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
+    }
+
+    val locationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            android.widget.Toast.makeText(context, "Izin diberikan, silakan klik Kirim lagi", android.widget.Toast.LENGTH_SHORT).show()
+        } else {
+            android.widget.Toast.makeText(context, "Aplikasi butuh izin lokasi untuk akurasi", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -165,22 +181,47 @@ fun FormSOSScreen(
             // Tombol Kirim SOS
             Button(
                 onClick = {
-                    isLoading = true
-                    sosViewModel.sendSOSRequest(
-                        patientName = patientName,
-                        bloodType = selectedBloodType,
-                        bloodBags = bloodBags,
-                        facilityName = facilityLocation,
-                        note = relationship,
-                        onSuccess = { requestId ->
-                            isLoading = false
-                            onSubmit(requestId) // Kirim ID ke MainActivity untuk navigasi
-                        },
-                        onError = { error ->
-                            isLoading = false
-                            // TODO: Tampilkan Toast error
-                        }
+                    val fineLocationPermission = ContextCompat.checkSelfPermission(
+                        context, android.Manifest.permission.ACCESS_FINE_LOCATION
                     )
+
+                    if (fineLocationPermission == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        isLoading = true
+                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                            // Jika lokasi null (GPS mati), kita kirim 0.0 atau koordinat default
+                            val lat = location?.latitude ?: 0.0
+                            val lng = location?.longitude ?: 0.0
+
+                            sosViewModel.sendSOSRequest(
+                                patientName = patientName,
+                                bloodType = selectedBloodType,
+                                bloodBags = bloodBags,
+                                facilityName = facilityLocation,
+                                note = relationship,
+                                lat = lat,
+                                lng = lng,
+                                // AMBIL NOMOR HP DARI USER PROFILE YANG SEDANG LOGIN
+                                requesterPhone = com.google.firebase.auth.FirebaseAuth.getInstance()
+                                    .currentUser?.phoneNumber ?: "",
+                                onSuccess = { requestId ->
+                                    isLoading = false
+                                    onSubmit(requestId)
+                                },
+                                onError = { error ->
+                                    isLoading = false
+                                    android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    } else {
+                        // Meminta izin jika belum ada
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                android.Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

@@ -3,7 +3,10 @@ package com.yareu.redconnect.ui.sos
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.yareu.redconnect.data.DonorResponse
+import com.yareu.redconnect.data.DonorResponseStatus
 import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.RequestStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,9 @@ class SOSViewModel : ViewModel() {
         bloodBags: Int,
         facilityName: String,
         note: String,
+        lat: Double,
+        lng: Double,
+        requesterPhone: String,
         onSuccess: (String) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -36,12 +42,15 @@ class SOSViewModel : ViewModel() {
                     id = docRef.id,
                     requesterId = uid,
                     requesterName = patientName,
+                    requesterPhone = requesterPhone,
                     bloodType = bloodType,
                     bloodBags = bloodBags,
                     facilityName = facilityName,
                     note = note,
                     status = RequestStatus.WAITING,
-                    createdAt = System.currentTimeMillis()
+                    createdAt = System.currentTimeMillis(),
+                    latitude = lat, // Simpan koordinat asli
+                    longitude = lng // Simpan koordinat asli
                 )
                 docRef.set(request).await()
                 onSuccess(docRef.id)
@@ -53,12 +62,47 @@ class SOSViewModel : ViewModel() {
 
     // Fungsi Ambil List SOS (Real-time)
     fun fetchEmergencyRequests() {
+        // Jangan di-filter statusnya di query Firestore agar data ACCEPTED tetap terbaca
         firestore.collection("emergency_requests")
-            .whereEqualTo("status", "WAITING")
+            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { value, error ->
                 if (value != null) {
                     _emergencyRequests.value = value.toObjects(EmergencyRequest::class.java)
                 }
             }
+    }
+
+    fun acceptRequest(
+        requestId: String,
+        donorProfile: com.yareu.redconnect.data.User, // butuh data user yang login
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                // Buat objek respons dari pendonor
+                val response = DonorResponse(
+                    id = auth.currentUser?.uid ?: "",
+                    requestId = requestId,
+                    donorId = auth.currentUser?.uid ?: "",
+                    donorName = donorProfile.name,
+                    bloodType = donorProfile.bloodType,
+                    phoneNumber = donorProfile.phoneNumber,
+                    distance = "1.2 km", // Nanti diupdate pakai LocationUtils
+                    status = DonorResponseStatus.ON_WAY // Status langsung "Dalam Perjalanan"
+                )
+
+                // Update Firestore, Tambahkan ke list respondingDonors dan ubah status utama jadi ACCEPTED
+                firestore.collection("emergency_requests").document(requestId)
+                    .update(
+                        "respondingDonors", FieldValue.arrayUnion(response),
+                        "status", RequestStatus.ACCEPTED
+                    ).await()
+
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e.message ?: "Gagal menerima permintaan")
+            }
+        }
     }
 }
