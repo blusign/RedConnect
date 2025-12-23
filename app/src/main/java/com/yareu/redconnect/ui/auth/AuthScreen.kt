@@ -290,7 +290,19 @@ fun RegisterForm(
         // Grup Kata Sandi
         Column {
             SectionTitle("Buat Kata Sandi")
-            TextFieldStandard(value = password, onValueChange = { password = it }, label = "Minimal 6 karakter", isPassword = true, enabled = !isLoading)
+            TextFieldStandard(
+                value = password,
+                onValueChange = {            // CEGAH SPASI, filter agar tidak ada spasi yang masuk
+                    if (!it.contains(" ")) password = it
+                },
+                label = "Password",
+                placeholder = "Minimal 6 karakter",
+                isPassword = true,
+                enabled = !isLoading,
+                // Tambahkan info di bawah field
+                isError = password.isNotEmpty() && password.length < 6,
+                errorMessage = "Gunakan minimal 6 karakter tanpa spasi"
+            )
         }
 
         Spacer(Modifier.height(16.dp))

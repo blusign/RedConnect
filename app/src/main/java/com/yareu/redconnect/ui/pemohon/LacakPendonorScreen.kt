@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -56,6 +57,10 @@ fun LacakPendonorScreen(
     sosViewModel: SOSViewModel = viewModel(),
     onBackClick: () -> Unit = {}
 ) {
+    LaunchedEffect(Unit) {
+        sosViewModel.fetchEmergencyRequests()
+    }
+
     // Ambil semua request dari ViewModel
     val allRequests by sosViewModel.emergencyRequests.collectAsState()
 
@@ -215,8 +220,15 @@ fun PendonorTerpilihCard(donor: DonorResponse) {
 
             IconButton(
                 onClick = {
+                    // Ambil nomor pemohon (karena ini layar Lacak, yang dihubungi adalah pendonor)
+                    val phone = donor.phoneNumber
+                    // Membersihkan nomor: hilangkan spasi, strip, dan pastikan diawali 62
+                    val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+                    val formattedPhone = if (cleanPhone.startsWith("0")) "62${cleanPhone.substring(1)}" else cleanPhone
+
+                    val message = "Halo ${donor.donorName}, saya pemohon dari RedConnect..."
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://wa.me/62${donor.phoneNumber.removePrefix("0")}")
+                        data = Uri.parse("https://wa.me/$formattedPhone?text=${Uri.encode(message)}")
                     }
                     context.startActivity(intent)
                 },

@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
+import com.yareu.redconnect.data.RequestStatus
+import com.yareu.redconnect.navigations.Screen
 import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.cards.EmergencyRequestCard
 import com.yareu.redconnect.ui.components.cards.PersonalInfoCard
@@ -73,6 +75,9 @@ fun HomePendonorScreen(
 
     // Ambil data dari Firestore lewat ViewModel
     val allRequests by sosViewModel.emergencyRequests.collectAsState()
+    val activeRequest = allRequests.find {
+        it.requesterId == userProfile?.id && it.status != RequestStatus.COMPLETED
+    }
 
     // Ambil data setiap kali layar dibuka
     LaunchedEffect(Unit) {
@@ -173,20 +178,15 @@ fun HomePendonorScreen(
                 if (acceptedRequest != null) {
                     item {
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                             colors = CardDefaults.cardColors(containerColor = BlueAccent.copy(alpha = 0.1f)),
                             border = androidx.compose.foundation.BorderStroke(1.dp, BlueAccent)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text("🚑", fontSize = 24.sp)
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text("Tugas Aktif: Menolong ${acceptedRequest.requesterName}", fontWeight = FontWeight.Bold)
+                                    Text("Tugas Aktif: Permintaan dari ${acceptedRequest.requesterName}", fontWeight = FontWeight.Bold)
                                     Text("Faskes: ${acceptedRequest.facilityName}", fontSize = 12.sp, color = Gray)
                                 }
                                 Text(
@@ -194,7 +194,7 @@ fun HomePendonorScreen(
                                     color = BlueAccent,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.clickable {
-                                        onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(acceptedRequest.id))
+                                        onNavigate(Screen.DetailPermintaan.createRoute(acceptedRequest.id))
                                     }
                                 )
                             }

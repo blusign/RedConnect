@@ -31,6 +31,7 @@ class SOSViewModel : ViewModel() {
         lat: Double,
         lng: Double,
         requesterPhone: String,
+        urgency: String,
         onSuccess: (String) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -47,6 +48,7 @@ class SOSViewModel : ViewModel() {
                     bloodBags = bloodBags,
                     facilityName = facilityName,
                     note = note,
+                    urgency = urgency,
                     status = RequestStatus.WAITING,
                     createdAt = System.currentTimeMillis(),
                     latitude = lat, // Simpan koordinat asli
@@ -74,13 +76,32 @@ class SOSViewModel : ViewModel() {
 
     fun acceptRequest(
         requestId: String,
-        donorProfile: com.yareu.redconnect.data.User, // butuh data user yang login
+        donorProfile: com.yareu.redconnect.data.User,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
             try {
-                // Buat objek respons dari pendonor
+                // Ambil data request terbaru dari Firestore
+                val docRef = firestore.collection("emergency_requests").document(requestId)
+                val snapshot = docRef.get().await()
+                val request = snapshot.toObject(EmergencyRequest::class.java) ?: return@launch
+
+                // Cek Kuota berdasarkan Urgensi (Gunakan field 'note' atau tambah field urgency)
+                val currentDonors = request.respondingDonors.size
+                val maxAllowed = when(request.urgency) {
+                    "Tinggi" -> 1
+                    "Sedang" -> 3
+                    "Terencana" -> 10
+                    else -> 1
+                }
+
+                if (currentDonors >= maxAllowed) {
+                    onError("Maaf, kuota pendonor untuk permintaan ini sudah terpenuhi.")
+                    return@launch
+                }
+
+                // Buat objek respons
                 val response = DonorResponse(
                     id = auth.currentUser?.uid ?: "",
                     requestId = requestId,
@@ -88,21 +109,29 @@ class SOSViewModel : ViewModel() {
                     donorName = donorProfile.name,
                     bloodType = donorProfile.bloodType,
                     phoneNumber = donorProfile.phoneNumber,
-                    distance = "1.2 km", // Nanti diupdate pakai LocationUtils
-                    status = DonorResponseStatus.ON_WAY // Status langsung "Dalam Perjalanan"
+                    distance = "Terdekat",
+                    status = DonorResponseStatus.ON_WAY
                 )
 
-                // Update Firestore, Tambahkan ke list respondingDonors dan ubah status utama jadi ACCEPTED
-                firestore.collection("emergency_requests").document(requestId)
-                    .update(
-                        "respondingDonors", FieldValue.arrayUnion(response),
-                        "status", RequestStatus.ACCEPTED
-                    ).await()
-
+                // Update Firestore
+                docRef.update(
+                    "respondingDonors", FieldValue.arrayUnion(response),
+                    "status", RequestStatus.ACCEPTED
+                ).await()
                 onSuccess()
             } catch (e: Exception) {
                 onError(e.message ?: "Gagal menerima permintaan")
             }
         }
     }
+
+    fun deleteRequest(requestId: String) {    viewModelScope.launch {
+        try {
+            firestore.collection("emergency_requests").document(requestId).delete().await()
+        } catch (e: Exception) {
+            // Handle error silent
+        }
+    }
+    }
+
 }

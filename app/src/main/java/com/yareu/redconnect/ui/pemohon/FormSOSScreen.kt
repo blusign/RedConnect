@@ -203,6 +203,7 @@ fun FormSOSScreen(
                                 // AMBIL NOMOR HP DARI USER PROFILE YANG SEDANG LOGIN
                                 requesterPhone = com.google.firebase.auth.FirebaseAuth.getInstance()
                                     .currentUser?.phoneNumber ?: "",
+                                urgency = urgencyLevel,
                                 onSuccess = { requestId ->
                                     isLoading = false
                                     onSubmit(requestId)
@@ -258,7 +259,7 @@ private fun BloodBagCounter(bloodBags: Int, onBagsChange: (Int) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp) // Beri tinggi yang sama dengan text field
+            .height(56.dp)
             .background(White, RoundedCornerShape(12.dp))
             .border(1.dp, Gray, RoundedCornerShape(12.dp))
             .padding(horizontal = 16.dp),

@@ -199,10 +199,15 @@ fun DetailPermintaanScreen(
                 // Tombol Buka Maps
                 Button(
                     onClick = {
-                        val gmmIntentUri = Uri.parse("google.navigation:q=${request.latitude},${request.longitude}")
-                        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
-                        mapIntent.setPackage("com.google.android.apps.maps")
-                        context.startActivity(mapIntent)
+                        // AMBIL LAT/LNG DARI OBJECT 'request' (Data Pemohon)
+                        val lat = request.latitude
+                        val lng = request.longitude
+                        if (lat != 0.0 && lng != 0.0) {
+                            val gmmIntentUri = Uri.parse("google.navigation:q=$lat,$lng")
+                            val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                            mapIntent.setPackage("com.google.android.apps.maps")
+                            context.startActivity(mapIntent)
+                        }
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -218,10 +223,15 @@ fun DetailPermintaanScreen(
                 // Tombol Chat (WhatsApp)
                 Button(
                     onClick = {
-                        val phone = "6281234567890"
-                        val message = "Halo ${request.requesterName}, saya pendonor dari RedConnect bersedia membantu permintaan Anda di ${request.facilityName}."
+                        val phone = request.requesterPhone // Nomor si Pemohon
+                        // Membersihkan nomor dari karakter non-angka
+                        val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+                        // Format ke standar internasional (62)
+                        val formattedPhone = if (cleanPhone.startsWith("0")) "62${cleanPhone.substring(1)}" else cleanPhone
+
+                        val message = "Halo ${request.requesterName}, saya pendonor RedConnect ingin membantu permintaan darah Anda."
                         val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse("https://api.whatsapp.com/send?phone=$phone&text=${Uri.encode(message)}")
+                            data = Uri.parse("https://wa.me/$formattedPhone?text=${Uri.encode(message)}")
                         }
                         context.startActivity(intent)
                     },

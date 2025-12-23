@@ -34,6 +34,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,8 +47,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
+import com.yareu.redconnect.data.RequestStatus
+import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
+import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.BlueAccent
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
 import com.yareu.redconnect.ui.theme.DarkText
@@ -60,10 +66,23 @@ import com.yareu.redconnect.ui.theme.White
 fun HomePemohonScreen(
     onSOSClick: () -> Unit = {},
     onNavigate: (String) -> Unit = {},
-    onTrackDonorClick: () -> Unit = {}
+    onTrackDonorClick: (String) -> Unit = {},
+    sosViewModel: SOSViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
-    // Sample: Ada permintaan aktif atau tidak
-    val hasActiveRequest = true // dari ViewModel
+    val userProfile by authViewModel.userProfile.collectAsState()
+    val allRequests by sosViewModel.emergencyRequests.collectAsState()
+
+    // Cari request milik user ini yang statusnya BELUM selesai/batal
+    val activeRequest = allRequests.find {
+        it.requesterId == userProfile?.id &&
+                it.status != RequestStatus.COMPLETED &&
+                it.status != RequestStatus.CANCELLED
+    }
+
+    LaunchedEffect(Unit) {
+        sosViewModel.fetchEmergencyRequests()
+    }
 
     Scaffold(
         topBar = {
@@ -128,8 +147,12 @@ fun HomePemohonScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            if (hasActiveRequest) {
-                ActiveRequestCard(onDetailClick = onTrackDonorClick)
+            if (activeRequest != null) {
+                ActiveRequestCard(
+                    // Ambil nama pendonor pertama yang ACC / ON_WAY
+                    donorName = activeRequest.respondingDonors.firstOrNull()?.donorName ?: "Mencari...",
+                    onDetailClick = { onTrackDonorClick(activeRequest.id) }
+                )
             } else {
                 NoRequestCard()
             }
@@ -177,7 +200,7 @@ fun SOSButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun ActiveRequestCard(onDetailClick: () -> Unit) {
+fun ActiveRequestCard(donorName: String, onDetailClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -186,8 +209,8 @@ fun ActiveRequestCard(onDetailClick: () -> Unit) {
         Column(Modifier.padding(16.dp)) {
             Text("Pendonor ditemukan!", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BlueAccent)
             Spacer(Modifier.height(8.dp))
-            Text("• Budi Santoso (O+) sedang dalam perjalanan.", fontSize = 13.sp, color = Gray, fontWeight = FontWeight.Medium)
-            Text("• Membawa 2 kantong ke RS Harapan Kita.", fontSize = 13.sp, color = Gray)
+            // Gunakan $donorName agar dinamis
+            Text("• $donorName bersedia membantu.", fontSize = 13.sp, color = Gray, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(12.dp))
             Button(
                 onClick = onDetailClick,

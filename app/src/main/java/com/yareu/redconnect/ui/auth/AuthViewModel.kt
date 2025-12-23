@@ -148,19 +148,23 @@ class AuthViewModel : ViewModel() {
         val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
             try {
+                val newAddress = "Lokasi GPS ($lat, $lng)" // Teks ini akan muncul di UI
                 firestore.collection("users").document(uid)
                     .update(mapOf(
                         "latitude" to lat,
-                        "longitude" to lng
+                        "longitude" to lng,
+                        "address" to newAddress // UPDATE JUGA FIELD ADDRESS
                     )).await()
 
-                // Update local state
-                _userProfile.value = _userProfile.value?.copy(latitude = lat, longitude = lng)
+                _userProfile.value = _userProfile.value?.copy(
+                    latitude = lat,
+                    longitude = lng,
+                    address = newAddress
+                )
                 onSuccess()
-            } catch (e: Exception) {
-                // Handle error
-            }
+            } catch (e: Exception) { }
         }
     }
+
 }
     

@@ -11,6 +11,7 @@ data class EmergencyRequest(
     val facilityAddress: String = "",
     val distance: String = "",
     val note: String = "",
+    val urgency: String = "Tinggi",
     val status: RequestStatus = RequestStatus.WAITING,
     val timeAgo: String = "",
     val createdAt: Long = System.currentTimeMillis(),
