@@ -1,5 +1,8 @@
 package com.yareu.redconnect.ui.pemohon
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,21 +39,26 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.LocationServices
 import com.yareu.redconnect.R
 import com.yareu.redconnect.navigations.Screen
 import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
+import com.yareu.redconnect.ui.theme.BlueAccent
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
 import com.yareu.redconnect.ui.theme.DarkText
 import com.yareu.redconnect.ui.theme.ErrorRed
@@ -68,6 +77,8 @@ fun ProfilPemohonScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     val userProfile by authViewModel.userProfile.collectAsState()
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     Scaffold(
         topBar = {
@@ -105,7 +116,36 @@ fun ProfilPemohonScreen(
                 SectionCard(title = "Data Diri") {
                     InfoRow(label = "Nama", value = userProfile?.name ?: "-")
                     InfoRow(label = "Nomor HP", value = userProfile?.phoneNumber ?: "-")
-                    InfoRow(label = "Alamat", value = userProfile?.address ?: "-")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Alamat", fontSize = 14.sp, color = Gray)
+                            Text(userProfile?.address ?: "-", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DarkText)
+                        }
+
+                        IconButton(
+                            onClick = {
+                                val permission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                                if (permission == PackageManager.PERMISSION_GRANTED) {
+                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                        location?.let {
+                                            authViewModel.updateLocationToGps(context, it.latitude, it.longitude) {
+                                                Toast.makeText(context, "Alamat rumah diperbarui!", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Minta izin lokasi
+                                }
+                            },
+                            modifier = Modifier.background(BlueAccent.copy(alpha = 0.1f), CircleShape)
+                        ) {
+                            Icon(Icons.Default.MyLocation, contentDescription = null, tint = BlueAccent, modifier = Modifier.size(20.dp))
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))

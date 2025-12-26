@@ -1,5 +1,8 @@
 package com.yareu.redconnect.ui.pemohon
 
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,16 +14,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -33,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.LocationServices
 import com.yareu.redconnect.R
 import com.yareu.redconnect.ui.components.inputs.DropdownBloodType
 import com.yareu.redconnect.ui.components.inputs.TextFieldStandard
@@ -59,6 +69,9 @@ import com.yareu.redconnect.ui.theme.PinkAccent
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.White
 import com.yareu.redconnect.utils.Constants
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,18 +88,16 @@ fun FormSOSScreen(
     var urgencyLevel by remember { mutableStateOf("Tinggi") }
     var isLoading by remember { mutableStateOf(false) }
 
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val fusedLocationClient = remember {
-        com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
-    }
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
+    // Launcher Izin tetap ada untuk tombol GPS
     val locationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            android.widget.Toast.makeText(context, "Izin diberikan, silakan klik Kirim lagi", android.widget.Toast.LENGTH_SHORT).show()
-        } else {
-            android.widget.Toast.makeText(context, "Aplikasi butuh izin lokasi untuk akurasi", android.widget.Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Izin diberikan, silakan klik ikon 📍", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -139,10 +150,64 @@ fun FormSOSScreen(
             // Grup Lokasi
             Column {
                 SectionTitle("Lokasi Fasilitas Kesehatan")
-                TextFieldStandard(
-                    value = facilityLocation,
-                    onValueChange = { facilityLocation = it },
-                    label = "Masukkan nama atau alamat faskes"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextFieldStandard(
+                        value = facilityLocation,
+                        onValueChange = { facilityLocation = it },
+                        label = "Ketik nama RS atau Alamat",
+                        modifier = Modifier.weight(1f) // Memberi ruang untuk tombol di samping
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    // TOMBOL GPS (Gunakan Lokasi Saat Ini)
+                    IconButton(
+                        onClick = {
+                            val permission = ContextCompat.checkSelfPermission(
+                                context,
+                                android.Manifest.permission.ACCESS_FINE_LOCATION
+                            )
+                            if (permission == PackageManager.PERMISSION_GRANTED) {
+                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                    location?.let {
+                                        // Gunakan Geocoder untuk mengubah koordinat jadi teks alamat di field
+                                        scope.launch(Dispatchers.IO) {
+                                            try {
+                                                val geocoder = Geocoder(context, java.util.Locale.getDefault())
+                                                val addresses = geocoder.getFromLocation(it.latitude, it.longitude, 1)
+                                                if (!addresses.isNullOrEmpty()) {
+                                                    withContext(Dispatchers.Main) {
+                                                        facilityLocation = addresses[0].getAddressLine(0)
+                                                        Toast.makeText(context, "Lokasi saat ini diambil", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            } catch (e: Exception) { }
+                                        }
+                                    }
+                                }
+                            } else {
+                                locationPermissionLauncher.launch(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION))
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .background(PinkAccent.copy(alpha = 0.1f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = "Gunakan GPS",
+                            tint = PinkAccent
+                        )
+                    }
+                }
+                Text(
+                    "Tips: Ketik nama RS (contoh: RS Sardjito) atau klik ikon 📍",
+                    fontSize = 11.sp,
+                    color = Gray,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
             Spacer(Modifier.height(16.dp))
@@ -178,50 +243,61 @@ fun FormSOSScreen(
             Spacer(Modifier.weight(1f))
             Spacer(Modifier.height(24.dp))
 
-            // Tombol Kirim SOS
+            // Tombol Kirim Permintaan SOS
             Button(
                 onClick = {
-                    val fineLocationPermission = ContextCompat.checkSelfPermission(
-                        context, android.Manifest.permission.ACCESS_FINE_LOCATION
-                    )
+                    if (facilityLocation.isEmpty()) {
+                        Toast.makeText(context, "Mohon isi lokasi faskes", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
 
-                    if (fineLocationPermission == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                        isLoading = true
-                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                            // Jika lokasi null (GPS mati), kita kirim 0.0 atau koordinat default
-                            val lat = location?.latitude ?: 0.0
-                            val lng = location?.longitude ?: 0.0
+                    isLoading = true
 
-                            sosViewModel.sendSOSRequest(
-                                patientName = patientName,
-                                bloodType = selectedBloodType,
-                                bloodBags = bloodBags,
-                                facilityName = facilityLocation,
-                                note = relationship,
-                                lat = lat,
-                                lng = lng,
-                                // AMBIL NOMOR HP DARI USER PROFILE YANG SEDANG LOGIN
-                                requesterPhone = com.google.firebase.auth.FirebaseAuth.getInstance()
-                                    .currentUser?.phoneNumber ?: "",
-                                urgency = urgencyLevel,
-                                onSuccess = { requestId ->
-                                    isLoading = false
-                                    onSubmit(requestId)
-                                },
-                                onError = { error ->
-                                    isLoading = false
-                                    android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val geocoder = Geocoder(context)
+                            // Mencari koordinat berdasarkan teks yang ada di facilityLocation
+                            // (Baik itu hasil ketik manual atau hasil klik tombol GPS tadi)
+                            val addresses = geocoder.getFromLocationName(facilityLocation, 1)
+
+                            if (!addresses.isNullOrEmpty()) {
+                                val targetLat = addresses[0].latitude
+                                val targetLng = addresses[0].longitude
+
+                                withContext(Dispatchers.Main) {
+                                    sosViewModel.sendSOSRequest(
+                                        patientName = patientName,
+                                        bloodType = selectedBloodType,
+                                        bloodBags = bloodBags,
+                                        facilityName = facilityLocation,
+                                        note = relationship,
+                                        lat = targetLat,
+                                        lng = targetLng,
+                                        requesterPhone = com.google.firebase.auth.FirebaseAuth.getInstance()
+                                            .currentUser?.phoneNumber ?: "",
+                                        urgency = urgencyLevel,
+                                        onSuccess = { requestId ->
+                                            isLoading = false
+                                            onSubmit(requestId)
+                                        },
+                                        onError = { error ->
+                                            isLoading = false
+                                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
                                 }
-                            )
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    isLoading = false
+                                    Toast.makeText(context, "Lokasi tidak ditemukan. Pastikan nama RS benar.", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                isLoading = false
+                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
                         }
-                    } else {
-                        // Meminta izin jika belum ada
-                        locationPermissionLauncher.launch(
-                            arrayOf(
-                                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                                android.Manifest.permission.ACCESS_COARSE_LOCATION
-                            )
-                        )
                     }
                 },
                 modifier = Modifier
@@ -229,14 +305,22 @@ fun FormSOSScreen(
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PinkAccent),
                 shape = RoundedCornerShape(12.dp),
-                // Tombol mati jika sedang loading
                 enabled = !isLoading && selectedBloodType.isNotEmpty() && facilityLocation.isNotEmpty() && patientName.isNotEmpty()
             ) {
-                Text(
-                    text = if (isLoading) "Mengirim..." else "Kirim Permintaan SOS",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (isLoading) {
+                    // Lingkaran loading kecil saat proses kirim ke Firebase
+                    CircularProgressIndicator(
+                        color = White,
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "KIRIM PERMINTAAN SOS",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

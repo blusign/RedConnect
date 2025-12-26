@@ -224,10 +224,16 @@ fun DetailPermintaanScreen(
                 Button(
                     onClick = {
                         val phone = request.requesterPhone // Nomor si Pemohon
-                        // Membersihkan nomor dari karakter non-angka
+
+                        // Logika konversi otomatis
                         val cleanPhone = phone.replace(Regex("[^0-9]"), "")
-                        // Format ke standar internasional (62)
-                        val formattedPhone = if (cleanPhone.startsWith("0")) "62${cleanPhone.substring(1)}" else cleanPhone
+                        val formattedPhone = if (cleanPhone.startsWith("0")) {
+                            "62" + cleanPhone.substring(1)
+                        } else if (cleanPhone.startsWith("8")) {
+                            "62" + cleanPhone
+                        } else {
+                            cleanPhone
+                        }
 
                         val message = "Halo ${request.requesterName}, saya pendonor RedConnect ingin membantu permintaan darah Anda."
                         val intent = Intent(Intent.ACTION_VIEW).apply {

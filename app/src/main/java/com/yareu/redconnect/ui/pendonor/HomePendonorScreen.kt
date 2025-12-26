@@ -72,6 +72,7 @@ fun HomePendonorScreen(
 ) {
     val userProfile by authViewModel.userProfile.collectAsState()
     val isAvailable = userProfile?.isAvailable ?: true
+    val currentStatus = userProfile?.isAvailable ?: true
 
     // Ambil data dari Firestore lewat ViewModel
     val allRequests by sosViewModel.emergencyRequests.collectAsState()
@@ -155,9 +156,9 @@ fun HomePendonorScreen(
                 }
                 item {
                     StatusToggleCard(
-                        isAvailable = isAvailable,
+                        isAvailable = currentStatus, // menggunakan data dari database
                         onToggleChange = { newValue ->
-                            authViewModel.updateAvailability(newValue) // Simpan ke DB
+                            authViewModel.updateAvailability(newValue) // Update ke database
                         }
                     )
                 }

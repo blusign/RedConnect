@@ -2,6 +2,7 @@ package com.yareu.redconnect.ui.pemohon
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.rounded.Whatsapp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -38,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.data.DonorResponse
-import com.yareu.redconnect.data.DonorResponseStatus
 import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
 import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.BlueAccent
@@ -47,6 +48,7 @@ import com.yareu.redconnect.ui.theme.DarkGray
 import com.yareu.redconnect.ui.theme.DarkText
 import com.yareu.redconnect.ui.theme.Gray
 import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.PinkAccent
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.SuccessGreen
 import com.yareu.redconnect.ui.theme.White
@@ -68,9 +70,7 @@ fun LacakPendonorScreen(
     val request = allRequests.find { it.id == requestId }
 
     // Ambil pendonor yang sudah mengonfirmasi (ACCEPTED/ON_WAY)
-    val confirmedDonor = request?.respondingDonors?.firstOrNull {
-        it.status == DonorResponseStatus.ON_WAY || it.status == DonorResponseStatus.ARRIVED
-    }
+    val confirmedDonor = request?.respondingDonors?.firstOrNull()
 
     Scaffold(
         topBar = {
@@ -123,15 +123,20 @@ fun LacakPendonorScreen(
 
             // Kartu donor terpilih
             if (confirmedDonor != null) {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    // Tampilkan kartu pendonor
                     PendonorTerpilihCard(donor = confirmedDonor)
                 }
             } else {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Text("Menunggu konfirmasi pendonor...", color = Gray)
+                // Tampilan jika masih kosong
+                Box(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = PinkAccent)
+                        Spacer(Modifier.height(16.dp))
+                        Text("Menunggu konfirmasi pendonor...", color = Gray)
+                    }
                 }
             }
 
@@ -219,18 +224,30 @@ fun PendonorTerpilihCard(donor: DonorResponse) {
             }
 
             IconButton(
-                onClick = {
-                    // Ambil nomor pemohon (karena ini layar Lacak, yang dihubungi adalah pendonor)
-                    val phone = donor.phoneNumber
-                    // Membersihkan nomor: hilangkan spasi, strip, dan pastikan diawali 62
-                    val cleanPhone = phone.replace(Regex("[^0-9]"), "")
-                    val formattedPhone = if (cleanPhone.startsWith("0")) "62${cleanPhone.substring(1)}" else cleanPhone
+                onClick = {val phone = donor.phoneNumber // Ini nomor asli dari DB
 
-                    val message = "Halo ${donor.donorName}, saya pemohon dari RedConnect..."
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://wa.me/$formattedPhone?text=${Uri.encode(message)}")
+                    // Buang semua karakter aneh (spasi, strip, dll)
+                    val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+
+                    // Logika konversi otomatis 08 -> 628
+                    val formattedPhone = if (cleanPhone.startsWith("0")) {
+                        "62" + cleanPhone.substring(1) // Hapus '0' di depan, ganti '62'
+                    } else if (cleanPhone.startsWith("8")) {
+                        "62" + cleanPhone // Tambah '62' jika langsung angka 8
+                    } else {
+                        cleanPhone // Sudah format 62 atau lainnya
                     }
-                    context.startActivity(intent)
+
+                    val message = "Halo ${donor.donorName}saya pemohon dari RedConnect. Terima kasih sudah bersedia membantu!"
+
+                    try {
+                        // Gunakan URL scheme whatsapp agar lebih direct
+                        val uri = Uri.parse("https://wa.me/$formattedPhone?text=${Uri.encode(message)}")
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Gagal membuka WhatsApp", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = Modifier
                     .size(48.dp)

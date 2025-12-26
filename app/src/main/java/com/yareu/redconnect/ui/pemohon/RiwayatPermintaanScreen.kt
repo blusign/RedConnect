@@ -24,6 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -33,9 +35,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.RequestStatus
+import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.navigation.PemohonBottomNavigationBar
+import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.BlueAccent
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
 import com.yareu.redconnect.ui.theme.DarkText
@@ -46,26 +51,33 @@ import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.SuccessGreen
 import com.yareu.redconnect.ui.theme.White
 
-// Data dummy untuk preview
-private val dummyRequestHistory = listOf(
-    EmergencyRequest(id = "1", facilityName = "RS Harapan Kita", timeAgo = "3 hari lalu", status = RequestStatus.COMPLETED, bloodType = "A+", bloodBags = 2),
-    EmergencyRequest(id = "2", facilityName = "Klinik Medika", timeAgo = "1 minggu lalu", status = RequestStatus.CANCELLED, bloodType = "O-", bloodBags = 1),
-    EmergencyRequest(id = "3", facilityName = "RS Sehat Selalu", timeAgo = "2 minggu lalu", status = RequestStatus.COMPLETED, bloodType = "B+", bloodBags = 3)
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RiwayatPermintaanScreen(
-    requests: List<EmergencyRequest> = dummyRequestHistory,
-    onNavigate: (String) -> Unit = {}
+    onNavigate: (String) -> Unit = {},
+    sosViewModel: SOSViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
+    val allRequests by sosViewModel.emergencyRequests.collectAsState()
+    val userProfile by authViewModel.userProfile.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    // Filter riwayat berdasarkan tab yang dipilih
+    // Ambil data asli milik Pemohon ini yang sudah tidak aktif
+    val myRequestHistory = allRequests.filter { req ->
+        req.requesterId == userProfile?.id &&
+                (req.status == RequestStatus.COMPLETED || req.status == RequestStatus.CANCELLED)
+    }
+
+    // Filter berdasarkan Tab
     val filteredRequests = when (selectedTab) {
-        1 -> requests.filter { it.status == RequestStatus.COMPLETED }
-        2 -> requests.filter { it.status == RequestStatus.CANCELLED }
-        else -> requests
+        1 -> myRequestHistory.filter { it.status == RequestStatus.COMPLETED }
+        2 -> myRequestHistory.filter { it.status == RequestStatus.CANCELLED }
+        else -> myRequestHistory
+    }
+
+    // Panggil fetch data
+    LaunchedEffect(Unit) {
+        sosViewModel.fetchEmergencyRequests()
     }
 
     Scaffold(

@@ -281,8 +281,8 @@ fun RegisterForm(
 
         // Grup Alamat
         Column {
-            SectionTitle("Alamat/Lokasi")
-            TextFieldStandard(value = address, onValueChange = { address = it }, label = "Masukkan alamat Anda", enabled = !isLoading)
+            SectionTitle("Alamat Rumah (Sesuai KTP)")
+            TextFieldStandard(value = address, onValueChange = { address = it }, label = "Masukkan alamat lengkap rumah", enabled = !isLoading)
         }
 
         Spacer(Modifier.height(16.dp))

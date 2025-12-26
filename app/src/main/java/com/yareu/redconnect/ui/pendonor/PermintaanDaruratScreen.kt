@@ -36,9 +36,12 @@ fun PermintaanDaruratScreen(
     sosViewModel: SOSViewModel = viewModel()
 ) {
     // Ambil data dari Firestore saat layar dibuka
-    LaunchedEffect(Unit) {
-        sosViewModel.fetchEmergencyRequests()
+    LaunchedEffect(Unit) {sosViewModel.fetchEmergencyRequests()
     }
+
+    val allRequests by sosViewModel.emergencyRequests.collectAsState()
+    // Hanya ambil yang statusnya WAITING
+    val activeRequests = allRequests.filter { it.status == com.yareu.redconnect.data.RequestStatus.WAITING }
 
     // Observasi data dari StateFlow
     val requests by sosViewModel.emergencyRequests.collectAsState()
@@ -66,7 +69,7 @@ fun PermintaanDaruratScreen(
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
 
-            items(requests) { request ->
+            items(activeRequests) { request -> // Pakai activeRequests
                 EmergencyRequestCard(
                     requesterName = request.requesterName,
                     bloodType = request.bloodType,

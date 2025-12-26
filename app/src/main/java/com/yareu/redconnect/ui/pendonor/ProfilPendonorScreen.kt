@@ -149,15 +149,14 @@ fun ProfilPendonorScreen(
                                 if (fineLocation == PackageManager.PERMISSION_GRANTED) {
                                     fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                                         if (location != null) {
-                                            authViewModel.updateLocationToGps(location.latitude, location.longitude) {
-                                                android.widget.Toast.makeText(context, "Koordinat berhasil diperbarui!", android.widget.Toast.LENGTH_SHORT).show()
+                                            // 'context' sebagai parameter pertama
+                                            authViewModel.updateLocationToGps(context, location.latitude, location.longitude) {
+                                                Toast.makeText(context, "Alamat diperbarui!", Toast.LENGTH_SHORT).show()
                                             }
                                         }
                                     }
                                 } else {
-                                    locationPermissionLauncher.launch(
-                                        arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                                    )
+                                    locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
                                 }
                             },
                             modifier = Modifier.background(BlueAccent.copy(alpha = 0.1f), CircleShape)

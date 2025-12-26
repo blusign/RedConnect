@@ -27,22 +27,25 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yareu.redconnect.data.DonorHistory
-import com.yareu.redconnect.data.HistoryStatus
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yareu.redconnect.data.RequestStatus
+import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
+import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.BlueAccent
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
 import com.yareu.redconnect.ui.theme.DarkText
@@ -55,41 +58,27 @@ import com.yareu.redconnect.ui.theme.White
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RiwayatDonorScreen(
-    onNavigate: (String) -> Unit = {}
+    onNavigate: (String) -> Unit = {},
+    sosViewModel: SOSViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    val allRequests by sosViewModel.emergencyRequests.collectAsState()
+    val userProfile by authViewModel.userProfile.collectAsState()
 
-    val allHistory = listOf(
-        DonorHistory(
-            id = "1",
-            date = "17 Agustus 2024",
-            facilityName = "Puskesmas Sehat Selalu",
-            bloodType = "A+",
-            status = HistoryStatus.COMPLETED,
-            points = 100
-        ),
-        DonorHistory(
-            id = "2",
-            date = "05 Juni 2024",
-            facilityName = "Klinik Medika Utama",
-            bloodType = "A+",
-            status = HistoryStatus.CANCELLED,
-            points = 0
-        ),
-        DonorHistory(
-            id = "3",
-            date = "12 April 2024",
-            facilityName = "Rumah Sakit Harapan Bangsa",
-            bloodType = "A+",
-            status = HistoryStatus.COMPLETED,
-            points = 100
-        )
-    )
+    // State untuk Tab
+    var selectedTab by remember { mutableIntStateOf(0) }
 
+    // Ambil data asli: Request yang sudah COMPLETED/CANCELLED
+    val myHistory = allRequests.filter { req ->
+        (req.status == RequestStatus.COMPLETED || req.status == RequestStatus.CANCELLED) &&
+                req.respondingDonors.any { it.donorId == userProfile?.id }
+    }
+
+    // Filter data berdasarkan Tab yang dipilih
     val filteredHistory = when (selectedTab) {
-        1 -> allHistory.filter { it.status == HistoryStatus.COMPLETED }
-        2 -> allHistory.filter { it.status == HistoryStatus.CANCELLED }
-        else -> allHistory
+        1 -> myHistory.filter { it.status == RequestStatus.COMPLETED }
+        2 -> myHistory.filter { it.status == RequestStatus.CANCELLED }
+        else -> myHistory // Tab Semua
     }
 
     Scaffold(
@@ -157,8 +146,8 @@ fun RiwayatDonorScreen(
             ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
 
-                items(filteredHistory) { history ->
-                    HistoryCard(history = history)
+                items(filteredHistory) { historyItem -> // Gunakan hasil filter tab
+                    HistoryCard(history = historyItem)
                 }
 
                 item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -192,7 +181,9 @@ fun RiwayatDonorScreen(
 }
 
 @Composable
-fun HistoryCard(history: DonorHistory) {
+fun HistoryCard(history: com.yareu.redconnect.data.EmergencyRequest) {
+    val isSuccess = history.status == RequestStatus.COMPLETED
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -206,30 +197,24 @@ fun HistoryCard(history: DonorHistory) {
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Tanggal: ${history.date}",
+                    // Format tanggal dari Long (createdAt) ke String
+                    text = com.yareu.redconnect.utils.DateUtils.formatDate(history.createdAt),
                     fontSize = 14.sp,
                     color = DarkText,
                     fontWeight = FontWeight.Medium
                 )
 
-                if (history.status == HistoryStatus.COMPLETED) {
-                    TextButton(onClick = { /* TODO: Show detail */ }) {
-                        Text(
-                            text = "Selesai ✓",
-                            fontSize = 12.sp,
-                            color = BlueAccent
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "Dibatalkan",
-                        fontSize = 12.sp,
-                        color = Gray
-                    )
-                }
+                // Label Status
+                Text(
+                    text = if (isSuccess) "Selesai ✓" else "Dibatalkan",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSuccess) BlueAccent else Gray
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -248,10 +233,11 @@ fun HistoryCard(history: DonorHistory) {
                 color = Gray
             )
 
-            if (history.status == HistoryStatus.COMPLETED) {
+            // Tampilkan poin hanya jika statusnya Selesai
+            if (isSuccess) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Poin Didapat: +${history.points} poin",
+                    text = "Poin Didapat: +100 poin",
                     fontSize = 13.sp,
                     color = BlueAccent,
                     fontWeight = FontWeight.Bold

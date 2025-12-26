@@ -78,8 +78,8 @@ class MainActivity : ComponentActivity() {
                         HomePemohonScreen(
                             onNavigate = { route -> navController.navigate(route) },
                             onSOSClick = { navController.navigate(Screen.FormSOS.route) },
-                            onTrackDonorClick = {
-                                navController.navigate(Screen.LacakPendonor.createRoute("dummy_req_id"))
+                            onTrackDonorClick = { requestId ->
+                                navController.navigate(Screen.LacakPendonor.createRoute(requestId))
                             }
                         )
                     }

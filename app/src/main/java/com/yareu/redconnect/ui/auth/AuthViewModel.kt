@@ -1,5 +1,6 @@
 package com.yareu.redconnect.ui.auth
 
+import android.location.Geocoder
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -26,15 +27,14 @@ class AuthViewModel : ViewModel() {
     }
 
     private fun fetchUserData(uid: String) {
-        viewModelScope.launch {
-            try {
-                val doc = firestore.collection("users").document(uid).get().await()
-                _userProfile.value = doc.toObject(User::class.java)
-            } catch (e: Exception) {
-                _userProfile.value = null
+        firestore.collection("users").document(uid)
+            .addSnapshotListener { snapshot, e ->
+                if (snapshot != null && snapshot.exists()) {
+                    _userProfile.value = snapshot.toObject(User::class.java)
+                }
             }
-        }
     }
+
     // Fungsi untuk mendaftarkan pengguna baru
     fun registerUser(
         email: String, // memakai email untuk login
@@ -144,22 +144,32 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun updateLocationToGps(lat: Double, lng: Double, onSuccess: () -> Unit) {
+    fun updateLocationToGps(context: android.content.Context, lat: Double, lng: Double, onSuccess: () -> Unit) {
         val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
             try {
-                val newAddress = "Lokasi GPS ($lat, $lng)" // Teks ini akan muncul di UI
+                // Proses Geocoding: Ubah angka jadi nama alamat
+                val geocoder = Geocoder(context, java.util.Locale.getDefault())
+                val addresses = geocoder.getFromLocation(lat, lng, 1)
+
+                // Ambil alamat lengkap, jika gagal pakai fallback teks GPS
+                val addressName = if (!addresses.isNullOrEmpty()) {
+                    addresses[0].getAddressLine(0)
+                } else {
+                    "Lokasi GPS ($lat, $lng)"
+                }
+
                 firestore.collection("users").document(uid)
                     .update(mapOf(
                         "latitude" to lat,
                         "longitude" to lng,
-                        "address" to newAddress // UPDATE JUGA FIELD ADDRESS
+                        "address" to addressName
                     )).await()
 
                 _userProfile.value = _userProfile.value?.copy(
                     latitude = lat,
                     longitude = lng,
-                    address = newAddress
+                    address = addressName
                 )
                 onSuccess()
             } catch (e: Exception) { }
