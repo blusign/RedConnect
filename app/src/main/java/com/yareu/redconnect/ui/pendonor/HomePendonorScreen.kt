@@ -165,10 +165,11 @@ fun HomePendonorScreen(
                 item {
                     PersonalInfoCard(
                         bloodType = userProfile?.bloodType ?: "-",
-                        totalDonations = 0,
-                        points = 0,
+                        totalDonations = userProfile?.totalDonations ?: 0,
+                        points = userProfile?.points ?: 0,
                         status = if (isAvailable) "Siap Donor" else "Sedang Istirahat"
                     )
+
                 }
 
                 val acceptedRequest = allRequests.find { req ->

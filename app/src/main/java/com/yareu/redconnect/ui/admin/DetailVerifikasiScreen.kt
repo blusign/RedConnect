@@ -27,14 +27,18 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.data.DonorResponse
 import com.yareu.redconnect.data.EmergencyRequest
+import com.yareu.redconnect.data.RequestStatus
 import com.yareu.redconnect.ui.components.topbars.TopBarWithBack
 import com.yareu.redconnect.ui.theme.DarkGray
 import com.yareu.redconnect.ui.theme.DarkText
@@ -48,14 +52,20 @@ import com.yareu.redconnect.ui.theme.White
 
 @Composable
 fun DetailVerifikasiScreen(
-    // ViewModel menyediakan data ini berdasarkan requestId
-    request: EmergencyRequest = dummyDetailRequest,
-    donorResponse: DonorResponse = dummyDetailDonor,
-    isEligible: Boolean = false, // Hasil pengecekan riwayat donor
+    requestId: String,
+    adminViewModel: AdminViewModel = viewModel(),
     onBackClick: () -> Unit = {},
-    onConfirmClick: () -> Unit = {},
+    onSuccessNav: (String) -> Unit = {},
     onRejectClick: () -> Unit = {}
 ) {
+    val allRequests by adminViewModel.adminRequests.collectAsState()
+    val request = allRequests.find { it.id == requestId }
+    val donor = request?.respondingDonors?.firstOrNull()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Logika Eligibility (Contoh simpel: Jika donor sudah ada)
+    val isEligible = donor != null
+
     Scaffold(
         topBar = {
             TopBarWithBack(
@@ -66,50 +76,44 @@ fun DetailVerifikasiScreen(
         containerColor = LightGray // Warna background abu-abu terang
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()) // Agar bisa di-scroll jika konten panjang
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(16.dp))
 
-            // 1. Kartu Detail Permintaan
-            SectionCard(title = "Detail Permintaan Darurat") {
-                InfoRow(label = "Pemohon", value = request.requesterName)
-                InfoRow(label = "Fasilitas Kesehatan", value = request.facilityName)
-                InfoRow(label = "Golongan Darah", value = request.bloodType)
-                InfoRow(label = "Jumlah Kantong", value = "${request.bloodBags} kantong")
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // 2. Kartu Detail Pendonor
+            // Kartu Detail Pendonor (Menampilkan data ASLI dari donor)
             SectionCard(title = "Pendonor yang Merespons") {
-                InfoRow(label = "Nama Pendonor", value = donorResponse.donorName)
-                InfoRow(label = "Golongan Darah", value = donorResponse.bloodType)
-                InfoRow(label = "Total Donor", value = "${donorResponse.totalDonations} kali")
-                InfoRow(label = "No. Telepon", value = donorResponse.phoneNumber)
+                if (donor != null) {
+                    InfoRow(label = "Nama Pendonor", value = donor.donorName)
+                    InfoRow(label = "Golongan Darah", value = donor.bloodType)
+                    InfoRow(label = "Total Donor Sebelumnya", value = "${donor.totalDonations} kali")
+                    InfoRow(label = "No. Telepon", value = donor.phoneNumber)
+                } else {
+                    Text("Belum ada pendonor yang merespons", color = ErrorRed)
+                }
             }
 
             Spacer(Modifier.height(16.dp))
-
-            // 3. Kartu Hasil Verifikasi
             VerificationResultCard(isEligible = isEligible)
+            Spacer(Modifier.weight(1f))
 
-            Spacer(Modifier.weight(1f)) // Mendorong tombol ke bawah
-
-            // 4. Tombol Aksi
             Column(modifier = Modifier.padding(bottom = 24.dp, top = 16.dp)) {
                 Button(
-                    onClick = onConfirmClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                    onClick = {
+                        if (request != null && donor != null) {
+                            adminViewModel.finalizeDonation(
+                                request = request,
+                                onSuccess = {
+                                    // Mengirim rute lengkap dengan data pendonor
+                                    onSuccessNav("selesai_donor/${donor.donorName}/100")
+                                },
+                                onError = { /* Toast error */ }
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
                     shape = RoundedCornerShape(12.dp),
-                    // Tombol hanya aktif jika pendonor memenuhi syarat
-                    enabled = isEligible
+                    enabled = isEligible && request?.status != RequestStatus.COMPLETED,
                 ) {
                     Text("Konfirmasi & Selesaikan Donor", fontWeight = FontWeight.Bold)
                 }
@@ -117,7 +121,19 @@ fun DetailVerifikasiScreen(
                 Spacer(Modifier.height(12.dp))
 
                 OutlinedButton(
-                    onClick = onRejectClick,
+                    onClick = {
+                        // Panggil fungsi rejectRequest dari ViewModel
+                        adminViewModel.rejectRequest(
+                            requestId = requestId,
+                            onSuccess = {
+                                // Panggil callback onRejectClick dari parameter (yang isinya navigasi back)
+                                onRejectClick()
+                            },
+                            onError = { error ->
+                                android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -204,36 +220,5 @@ private fun InfoRow(label: String, value: String) {
     ) {
         Text(label, fontSize = 14.sp, color = Gray)
         Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DarkText, textAlign = androidx.compose.ui.text.style.TextAlign.End)
-    }
-}
-
-// Data Dummy untuk Preview
-private val dummyDetailRequest = EmergencyRequest(
-    id = "REQ123",
-    requesterName = "Keluarga Bpk. Budi",
-    facilityName = "RS Harapan Kita",
-    bloodType = "A+",
-    bloodBags = 2
-)
-private val dummyDetailDonor = DonorResponse(
-    donorName = "Citra Lestari",
-    bloodType = "A+",
-    totalDonations = 8,
-    phoneNumber = "0812-3456-7890"
-)
-
-@Preview(name = "Pendonor Memenuhi Syarat", showBackground = true, showSystemUi = true)
-@Composable
-private fun DetailVerifikasiScreenEligiblePreview() {
-    RedConnectTheme {
-        DetailVerifikasiScreen(isEligible = true)
-    }
-}
-
-@Preview(name = "Pendonor Tidak Memenuhi Syarat", showBackground = true, showSystemUi = true)
-@Composable
-private fun DetailVerifikasiScreenNotEligiblePreview() {
-    RedConnectTheme {
-        DetailVerifikasiScreen(isEligible = false)
     }
 }

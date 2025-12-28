@@ -30,6 +30,13 @@ import com.yareu.redconnect.ui.theme.DarkText
 import com.yareu.redconnect.ui.theme.Gray
 import com.yareu.redconnect.ui.theme.LightGray
 import com.yareu.redconnect.ui.theme.RedConnectTheme
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ColorFilter
+import com.yareu.redconnect.ui.theme.BurgundyPrimary
+import com.yareu.redconnect.R
+
 
 @Composable
 fun AdminLoginScreen(
@@ -57,6 +64,13 @@ fun AdminLoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.redconnect_logo),
+                contentDescription = "Logo RedConnect",
+                modifier = Modifier.size(120.dp),
+                colorFilter = ColorFilter.tint(BurgundyPrimary)
+            )
+
             Text(
                 "Selamat Datang, Petugas",
                 fontSize = 22.sp,

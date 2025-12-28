@@ -1,14 +1,17 @@
 package com.yareu.redconnect
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.yareu.redconnect.data.UserRole
 import com.yareu.redconnect.navigations.Screen
 import com.yareu.redconnect.ui.admin.AdminLoginScreen
@@ -16,6 +19,7 @@ import com.yareu.redconnect.ui.admin.DetailVerifikasiScreen
 import com.yareu.redconnect.ui.admin.HomeAdminScreen
 import com.yareu.redconnect.ui.admin.SelesaiDonorScreen
 import com.yareu.redconnect.ui.auth.AuthScreen
+import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.onboardingScreens.OnboardingScreen
 import com.yareu.redconnect.ui.pemohon.FormSOSScreen
 import com.yareu.redconnect.ui.pemohon.HomePemohonScreen
@@ -161,14 +165,25 @@ class MainActivity : ComponentActivity() {
 
                     // ALUR ADMIN
                     composable(Screen.LoginAdmin.route) {
+                        val authViewModel: AuthViewModel = viewModel()
+                        val context = androidx.compose.ui.platform.LocalContext.current // Tambahkan ini
+
                         AdminLoginScreen(
-                            onBackClick = {
-                                navController.popBackStack()
-                            },
+                            onBackClick = { navController.popBackStack() },
                             onLoginClick = { id, password ->
-                                navController.navigate(Screen.HomeAdmin.route) {
-                                    popUpTo(Screen.Auth.route) { inclusive = true }
-                                }
+                                authViewModel.loginUser(
+                                    email = id,
+                                    password = password,
+                                    expectedRole = UserRole.ADMIN,
+                                    onSuccess = {
+                                        navController.navigate(Screen.HomeAdmin.route) {
+                                            popUpTo(Screen.Auth.route) { inclusive = true }
+                                        }
+                                    },
+                                    onError = { error ->
+                                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
                             }
                         )
                     }
@@ -183,16 +198,38 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // Kita akan gunakan rute yang ada di NavGraph
-                    composable(Screen.DetailVerifikasi.route) {
+                    composable(Screen.DetailVerifikasi.route) { backStackEntry ->
+                        val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
+                        val context = androidx.compose.ui.platform.LocalContext.current
+
                         DetailVerifikasiScreen(
+                            requestId = requestId,
                             onBackClick = { navController.popBackStack() },
-                            onConfirmClick = { navController.navigate(Screen.SelesaiDonor.route) },
-                            onRejectClick = { navController.popBackStack() } // Menolak dan kembali
+                            onSuccessNav = { dynamicRoute ->
+                                navController.navigate(dynamicRoute)
+                            },
+                            // TAMBAHKAN INI:
+                            onRejectClick = {
+                                navController.popBackStack()
+                                Toast.makeText(context, "Permintaan ditolak", Toast.LENGTH_SHORT).show()
+                            }
                         )
                     }
 
-                    composable(Screen.SelesaiDonor.route) {
+
+                    composable(
+                        route = "selesai_donor/{donorName}/{points}",
+                        arguments = listOf(
+                            navArgument("donorName") { type = NavType.StringType },
+                            navArgument("points") { type = NavType.IntType }
+                        )
+                    ) { backStackEntry ->
+                        val name = backStackEntry.arguments?.getString("donorName") ?: "Pendonor"
+                        val pts = backStackEntry.arguments?.getInt("points") ?: 100
+
                         SelesaiDonorScreen(
+                            donorName = name,
+                            points = pts,
                             onFinish = {
                                 navController.navigate(Screen.HomeAdmin.route) {
                                     popUpTo(Screen.HomeAdmin.route) { inclusive = true }

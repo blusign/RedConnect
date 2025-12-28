@@ -10,7 +10,9 @@ data class User(
     val address: String = "",
     val isAvailable: Boolean = true,
     val latitude: Double = 0.0,
-    val longitude: Double = 0.0
+    val longitude: Double = 0.0,
+    val points: Int = 0,
+    val totalDonations: Int = 0
 )
 
 enum class UserRole {

@@ -31,14 +31,14 @@ import com.yareu.redconnect.ui.theme.LightGray
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.SuccessGreen
 import com.yareu.redconnect.ui.theme.White
+import com.yareu.redconnect.utils.DateUtils
+import com.yareu.redconnect.utils.Constants
+import java.util.Date
 
 @Composable
 fun SelesaiDonorScreen(
-    // Data ini akan dikirim dari halaman DetailVerifikasiScreen
-    donorName: String = "Citra Lestari",
-    points: Int = 100,
-    daysUntilNext: Int = 75,
-    nextDonationDate: String = "5 Maret 2025",
+    donorName: String, // Terima dari navigasi
+    points: Int,      // Terima dari navigasi
     onFinish: () -> Unit = {}
 ) {
     // Menggunakan Scaffold untuk konsistensi background
@@ -94,9 +94,11 @@ fun SelesaiDonorScreen(
                     HorizontalDivider(color = LightGray)
                     Spacer(Modifier.height(4.dp))
 
-                    // Menggunakan Composable InfoRow yang didefinisikan di bawah
+                    val nextDateMillis = System.currentTimeMillis() + (Constants.DONATION_COOLDOWN_DAYS * 24L * 60L * 60L * 1000L)
+                    val nextDonationDate = DateUtils.formatDate(nextDateMillis)
+
                     InfoRow("Poin Diberikan", "+$points Poin")
-                    InfoRow("Masa Istirahat", "$daysUntilNext Hari")
+                    InfoRow("Masa Istirahat", "${Constants.DONATION_COOLDOWN_DAYS} Hari")
                     InfoRow("Dapat Donor Kembali", nextDonationDate)
                 }
             }
@@ -133,6 +135,10 @@ private fun InfoRow(label: String, value: String) {
 @Composable
 private fun SelesaiDonorScreenPreview() {
     RedConnectTheme {
-        SelesaiDonorScreen()
+        SelesaiDonorScreen(
+            donorName = "Ahmad",
+            points = 100,
+            onFinish = {}
+        )
     }
 }

@@ -24,6 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,7 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
+import com.yareu.redconnect.ui.auth.AuthViewModel
 import com.yareu.redconnect.ui.components.navigation.AdminBottomNavigationBar
 import com.yareu.redconnect.ui.theme.DarkText
 import com.yareu.redconnect.ui.theme.ErrorRed
@@ -45,12 +49,13 @@ import com.yareu.redconnect.ui.theme.White
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfilAdminScreen(
-    adminName: String = "Budi Santoso",
-    adminEmail: String = "budi.santoso@redconnect.admin",
+    authViewModel: AuthViewModel = viewModel(), // Gunakan AuthViewModel
     onLogoutClick: () -> Unit = {},
-    onNavigate: (String) -> Unit = {}, // Tambah parameter untuk navigasi
+    onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val adminProfile by authViewModel.userProfile.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -94,8 +99,17 @@ fun ProfilAdminScreen(
             Spacer(Modifier.height(16.dp))
 
             // Nama & Email Admin
-            Text(text = adminName, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DarkText)
-            Text(text = adminEmail, fontSize = 14.sp, color = Gray)
+            Text(
+                text = adminProfile?.name ?: "Admin RedConnect",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkText
+            )
+            Text(
+                text = adminProfile?.email ?: "admin@redconnect.com",
+                fontSize = 14.sp,
+                color = Gray
+            )
 
             Spacer(Modifier.weight(1f)) // Mendorong tombol ke bawah
 

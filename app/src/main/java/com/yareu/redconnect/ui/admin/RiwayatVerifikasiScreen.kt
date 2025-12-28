@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -27,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.yareu.redconnect.data.EmergencyRequest
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.data.RequestStatus
 import com.yareu.redconnect.ui.components.navigation.AdminBottomNavigationBar
 import com.yareu.redconnect.ui.theme.BurgundyPrimary
@@ -37,30 +38,27 @@ import com.yareu.redconnect.ui.theme.LightGray
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.White
 
-// Data dummy HANYA untuk preview di file ini
-private val dummyHistoryForPreview = listOf(
-    EmergencyRequest(id = "2", requesterName = "Citra W.", bloodType = "O-", bloodBags = 1, facilityName = "RS Sehat Selalu", status = RequestStatus.COMPLETED, timeAgo = "1 hari lalu"),
-    EmergencyRequest(id = "3", requesterName = "Adi P.", bloodType = "B+", bloodBags = 3, facilityName = "RS Medika Utama", status = RequestStatus.CANCELLED, timeAgo = "2 hari lalu"),
-    EmergencyRequest(id = "4", requesterName = "Dewi K.", bloodType = "AB+", bloodBags = 2, facilityName = "Klinik Harapan Bunda", status = RequestStatus.COMPLETED, timeAgo = "3 hari lalu")
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RiwayatVerifikasiScreen(
-    // Terima daftar riwayat dari NavGraph/ViewModel
-    historyRequests: List<EmergencyRequest>,
-    modifier: Modifier = Modifier,
-    onNavigate: (String) -> Unit = {}
+    adminViewModel: AdminViewModel = viewModel(),
+    onNavigate: (String) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
-    // State untuk mengelola tab filter yang dipilih
+    val allRequests by adminViewModel.adminRequests.collectAsState()
+
+    // Filter hanya yang COMPLETED atau CANCELLED
+    val historyRequests = allRequests.filter {
+        it.status == RequestStatus.COMPLETED || it.status == RequestStatus.CANCELLED
+    }
+
     var selectedFilterTab by remember { mutableIntStateOf(0) }
     val tabTitles = listOf("Semua", "Berhasil", "Ditolak")
 
-    // Logika untuk memfilter daftar riwayat berdasarkan tab yang aktif
     val filteredHistory = when (selectedFilterTab) {
-        1 -> historyRequests.filter { it.status == RequestStatus.COMPLETED || it.status == RequestStatus.ACCEPTED }
+        1 -> historyRequests.filter { it.status == RequestStatus.COMPLETED }
         2 -> historyRequests.filter { it.status == RequestStatus.CANCELLED }
-        else -> historyRequests // Tab 0 (Semua)
+        else -> historyRequests
     }
 
     Scaffold(
@@ -141,7 +139,5 @@ fun RiwayatVerifikasiScreen(
 @Composable
 private fun RiwayatVerifikasiScreenPreview() {
     RedConnectTheme {
-        
-        RiwayatVerifikasiScreen(historyRequests = dummyHistoryForPreview)
     }
 }

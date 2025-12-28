@@ -37,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.R
 import com.yareu.redconnect.data.EmergencyRequest
 import com.yareu.redconnect.data.RequestStatus
@@ -68,21 +71,27 @@ import com.yareu.redconnect.ui.theme.White
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeAdminScreen(
-    onNavigate: (route: String) -> Unit = {}
+    onNavigate: (route: String) -> Unit = {},
+    adminViewModel: AdminViewModel = viewModel()
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    // Data dummy
-    val allRequests = remember {
-        listOf(
-            EmergencyRequest(id = "1", requesterName = "Budi S.", bloodType = "A+", bloodBags = 2, facilityName = "RS Harapan Kita", status = RequestStatus.WAITING, timeAgo = "5 menit lalu"),
-            EmergencyRequest(id = "2", requesterName = "Citra W.", bloodType = "O-", bloodBags = 1, facilityName = "RS Sehat Selalu", status = RequestStatus.COMPLETED, timeAgo = "1 hari lalu"),
-            EmergencyRequest(id = "3", requesterName = "Adi P.", bloodType = "B+", bloodBags = 3, facilityName = "RS Medika Utama", status = RequestStatus.CANCELLED, timeAgo = "2 hari lalu")
-        )
+    // Ambil data asli dari Firestore
+    LaunchedEffect(Unit) {
+        adminViewModel.fetchAllRequests()
     }
-    // Pisahkan data untuk setiap tab
-    val activeRequests = allRequests.filter { it.status == RequestStatus.WAITING }
-    val historyRequests = allRequests.filter { it.status != RequestStatus.WAITING }
+
+    val allRequests by adminViewModel.adminRequests.collectAsState()
+
+    // Filter data berdasarkan status
+    // Tab Beranda: Tampilkan yang WAITING dan ACCEPTED (yang perlu divalidasi)
+    val activeRequests = allRequests.filter {
+        it.status == RequestStatus.WAITING || it.status == RequestStatus.ACCEPTED
+    }
+    // Tab Riwayat: Tampilkan yang sudah final
+    val historyRequests = allRequests.filter {
+        it.status == RequestStatus.COMPLETED || it.status == RequestStatus.CANCELLED
+    }
 
     Scaffold(
         topBar = {
@@ -262,7 +271,8 @@ fun AdminRequestCard(
 fun StatusChip(status: RequestStatus) {
     val (text, color) = when (status) {
         RequestStatus.WAITING -> "Perlu Validasi" to WarningYellow
-        RequestStatus.ACCEPTED, RequestStatus.COMPLETED -> "Berhasil" to BlueAccent
+        RequestStatus.ACCEPTED -> "Ada Pendonor" to BlueAccent
+        RequestStatus.COMPLETED -> "Selesai ✓" to SuccessGreen // Ubah ke Hijau jika selesai
         RequestStatus.CANCELLED -> "Ditolak" to ErrorRed
         else -> "Proses" to BlueAccent
     }
