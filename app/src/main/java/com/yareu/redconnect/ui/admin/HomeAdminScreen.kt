@@ -1,5 +1,6 @@
 package com.yareu.redconnect.ui.admin
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -93,6 +94,8 @@ fun HomeAdminScreen(
         it.status == RequestStatus.COMPLETED || it.status == RequestStatus.CANCELLED
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -114,13 +117,6 @@ fun HomeAdminScreen(
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = { /* TODO: Notifikasi */ }) {
-                        BadgedBox(badge = { Badge(containerColor = PinkAccent) }) {
-                            Icon(Icons.Default.Notifications, "Notifikasi", tint = DarkText)
-                        }
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
             )
         },
@@ -133,7 +129,18 @@ fun HomeAdminScreen(
             0 -> AdminBerandaContent(
                 requests = activeRequests,
                 onValidateClick = { requestId -> onNavigate("detail_verifikasi/$requestId") },
-                onRejectClick = { /* TODO: Implementasi logika tolak */ },
+                onRejectClick = { requestId ->
+                    // Panggil fungsi reject dari ViewModel
+                    adminViewModel.rejectRequest(
+                        requestId = requestId,
+                        onSuccess = {
+                            Toast.makeText(context, "Permintaan telah ditolak", Toast.LENGTH_SHORT).show()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
                 modifier = Modifier.padding(padding)
             )
             1 -> AdminRiwayatContent(
@@ -141,7 +148,10 @@ fun HomeAdminScreen(
                 modifier = Modifier.padding(padding)
             )
             2 -> ProfilAdminScreen(
-                onLogoutClick = { onNavigate("login") }, // Contoh navigasi ke halaman login
+                onLogoutClick = {
+                    onNavigate("login_admin")
+                },
+                onNavigate = onNavigate,
                 modifier = Modifier.padding(padding)
             )
         }

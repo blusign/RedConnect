@@ -73,7 +73,7 @@ fun RiwayatVerifikasiScreen(
                 selectedTab = 1,
                 onTabSelected = { index ->
                     when (index) {
-                        0 -> onNavigate("admin_home")
+                        0 -> onNavigate("home_admin")
                         2 -> onNavigate("admin_profile")
                     }
                 }

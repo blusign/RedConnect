@@ -67,7 +67,7 @@ fun AdminLoginScreen(
             Image(
                 painter = painterResource(id = R.drawable.redconnect_logo),
                 contentDescription = "Logo RedConnect",
-                modifier = Modifier.size(120.dp),
+                modifier = Modifier.size(210.dp),
                 colorFilter = ColorFilter.tint(BurgundyPrimary)
             )
 

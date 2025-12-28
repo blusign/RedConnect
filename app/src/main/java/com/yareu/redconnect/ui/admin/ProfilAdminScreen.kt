@@ -68,7 +68,7 @@ fun ProfilAdminScreen(
                 selectedTab = 2,
                 onTabSelected = { index ->
                     when (index) {
-                        0 -> onNavigate("admin_home") // Navigasi ke Beranda Admin
+                        0 -> onNavigate("home_admin") // Navigasi ke Beranda Admin
                         1 -> onNavigate("admin_history") // Navigasi ke Riwayat Admin
                     }
                 }
@@ -115,10 +115,11 @@ fun ProfilAdminScreen(
 
             // Tombol Logout
             OutlinedButton(
-                onClick = onLogoutClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                onClick = {
+                    authViewModel.logout()
+                    onLogoutClick() // Memicu navigasi di MainActivity
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, ErrorRed),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorRed)

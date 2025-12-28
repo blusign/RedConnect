@@ -191,8 +191,15 @@ class MainActivity : ComponentActivity() {
                     composable(Screen.HomeAdmin.route) {
                         HomeAdminScreen(
                             onNavigate = { route ->
-                                // Navigasi dari HomeAdmin ke halaman lain
-                                navController.navigate(route)
+                                if (route == "login_admin") {
+                                    // Jika route yang dikirim adalah login_admin (dari tombol logout)
+                                    navController.navigate(Screen.LoginAdmin.route) {
+                                        // Hapus semua history admin agar tidak bisa di-back balik ke dashboard
+                                        popUpTo(Screen.HomeAdmin.route) { inclusive = true }
+                                    }
+                                } else {
+                                    navController.navigate(route)
+                                }
                             }
                         )
                     }
