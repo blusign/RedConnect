@@ -55,6 +55,19 @@ class SOSViewModel : ViewModel() {
                     longitude = lng // Simpan koordinat asli
                 )
                 docRef.set(request).await()
+
+                val notifRef = firestore.collection("notifications").document()
+                val notifData = mapOf(
+                    "id" to notifRef.id,
+                    "title" to "Darurat Golongan Darah $bloodType!",
+                    "message" to "Dibutuhkan segera di $facilityName untuk pasien $patientName.",
+                    "type" to "SOS_BROADCAST",
+                    "requestId" to docRef.id,
+                    "createdAt" to System.currentTimeMillis(),
+                    "targetBloodType" to bloodType
+                )
+                notifRef.set(notifData).await()
+
                 onSuccess(docRef.id)
             } catch (e: Exception) {
                 onError(e.message ?: "Gagal mengirim SOS")

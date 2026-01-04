@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yareu.redconnect.data.RequestStatus
 import com.yareu.redconnect.ui.components.navigation.AdminBottomNavigationBar
@@ -42,91 +44,79 @@ import com.yareu.redconnect.ui.theme.White
 @Composable
 fun RiwayatVerifikasiScreen(
     adminViewModel: AdminViewModel = viewModel(),
-    onNavigate: (String) -> Unit = {},
-    modifier: Modifier = Modifier
+    onNavigate: (String) -> Unit = {}
 ) {
     val allRequests by adminViewModel.adminRequests.collectAsState()
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabTitles = listOf("Semua", "Berhasil", "Ditolak")
 
-    // Filter hanya yang COMPLETED atau CANCELLED
-    val historyRequests = allRequests.filter {
+    LaunchedEffect(Unit) {
+        adminViewModel.fetchAllRequests()
+    }
+
+    // Filter data dasar: Hanya yang COMPLETED atau CANCELLED
+    val historyData = allRequests.filter {
         it.status == RequestStatus.COMPLETED || it.status == RequestStatus.CANCELLED
     }
 
-    var selectedFilterTab by remember { mutableIntStateOf(0) }
-    val tabTitles = listOf("Semua", "Berhasil", "Ditolak")
-
-    val filteredHistory = when (selectedFilterTab) {
-        1 -> historyRequests.filter { it.status == RequestStatus.COMPLETED }
-        2 -> historyRequests.filter { it.status == RequestStatus.CANCELLED }
-        else -> historyRequests
+    // Filter berdasarkan Tab
+    val filteredHistory = when (selectedTab) {
+        1 -> historyData.filter { it.status == RequestStatus.COMPLETED }
+        2 -> historyData.filter { it.status == RequestStatus.CANCELLED }
+        else -> historyData
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Riwayat Verifikasi", color = DarkText, fontWeight = FontWeight.Bold) },
+                title = { Text("Riwayat Verifikasi", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
             )
         },
         bottomBar = {
-            AdminBottomNavigationBar(
-                selectedTab = 1,
-                onTabSelected = { index ->
-                    when (index) {
-                        0 -> onNavigate("home_admin")
-                        2 -> onNavigate("admin_profile")
-                    }
+            AdminBottomNavigationBar(selectedTab = 1, onTabSelected = { index ->
+                when (index) {
+                    0 -> onNavigate("home_admin")
+                    2 -> onNavigate("admin_profile")
                 }
-            )
+            })
         },
         containerColor = LightGray
-    ) { paddingValues ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // TabRow untuk filter: Semua, Berhasil, Ditolak
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding)) {
             TabRow(
-                selectedTabIndex = selectedFilterTab,
+                selectedTabIndex = selectedTab,
                 containerColor = White,
                 contentColor = BurgundyPrimary,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedFilterTab]),
+                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
                         color = BurgundyPrimary
                     )
                 }
             ) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
-                        selected = selectedFilterTab == index,
-                        onClick = { selectedFilterTab = index },
-                        text = { Text(title) }
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(title, fontSize = 14.sp) }
                     )
                 }
             }
 
-            // Konten Riwayat (LazyColumn)
-            if (filteredHistory.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Tidak ada riwayat untuk kategori ini.", color = Gray)
-                }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (filteredHistory.isEmpty()) {
+                    item {
+                        Box(Modifier.fillParentMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                            Text("Tidak ada data riwayat", color = androidx.compose.ui.graphics.Color.Gray)
+                        }
+                    }
+                } else {
                     items(filteredHistory) { request ->
-                        AdminRequestCard(
-                            request = request,
-                            showActions = false
-                        )
+                        AdminRequestCard(request = request, showActions = false)
                     }
                 }
             }

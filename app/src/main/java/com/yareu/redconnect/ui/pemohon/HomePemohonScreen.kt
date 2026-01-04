@@ -96,11 +96,21 @@ fun HomePemohonScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO */ }) {
+                    IconButton(onClick = { onNavigate("notifikasi_screen") }) {
                         BadgedBox(
-                            badge = { Badge(containerColor = PinkAccent) }
+                            badge = {
+                                // Nanti angka "1" ini bisa kamu buat dinamis
+                                // mengambil jumlah dokumen dari koleksi "notifications"
+                                Badge(containerColor = PinkAccent) {
+                                    Text("1")
+                                }
+                            }
                         ) {
-                            Icon(Icons.Default.Notifications, "Notifikasi", tint = DarkText)
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notifikasi",
+                                tint = DarkText
+                            )
                         }
                     }
                 },

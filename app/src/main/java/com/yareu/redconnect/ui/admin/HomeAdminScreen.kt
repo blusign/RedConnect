@@ -34,6 +34,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -200,29 +202,52 @@ fun AdminRiwayatContent(
     requests: List<EmergencyRequest>,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(LightGray)
-            .padding(16.dp)
-    ) {
-        if (requests.isEmpty()) {
+    // Tambahkan state untuk tab internal di dalam riwayat
+    var historyTab by remember { mutableIntStateOf(0) }
+    val titles = listOf("Semua", "Berhasil", "Dibatalkan")
+
+    // Filter berdasarkan tab yang diklik
+    val filtered = when (historyTab) {
+        1 -> requests.filter { it.status == RequestStatus.COMPLETED }
+        2 -> requests.filter { it.status == RequestStatus.CANCELLED }
+        else -> requests
+    }
+
+    Column(modifier = modifier
+        .fillMaxSize()
+        .background(LightGray)) {
+        // TAMBAHKAN TAB ROW DI SINI
+        TabRow(
+            selectedTabIndex = historyTab,
+            containerColor = White,
+            contentColor = BurgundyPrimary
+        ) {
+            titles.forEachIndexed { index, title ->
+                Tab(
+                    selected = historyTab == index,
+                    onClick = { historyTab = index },
+                    text = { Text(title, fontSize = 14.sp) }
+                )
+            }
+        }
+
+        if (filtered.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Belum ada riwayat verifikasi.", color = Gray)
+                Text("Tidak ada riwayat.", color = Gray)
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(requests) { request ->
-                    // showActions = false, sehingga tidak ada tombol yang muncul
-                    AdminRequestCard(
-                        request = request,
-                        showActions = false
-                    )
+            LazyColumn(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(filtered) { request ->
+                    AdminRequestCard(request = request, showActions = false)
                 }
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

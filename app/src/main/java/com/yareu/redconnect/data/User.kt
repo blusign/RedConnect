@@ -12,7 +12,8 @@ data class User(
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val points: Int = 0,
-    val totalDonations: Int = 0
+    val totalDonations: Int = 0,
+    val ktpNumber: String = ""
 )
 
 enum class UserRole {

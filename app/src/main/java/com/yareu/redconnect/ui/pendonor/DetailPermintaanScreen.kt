@@ -2,6 +2,7 @@ package com.yareu.redconnect.ui.pendonor
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -284,11 +285,11 @@ fun DetailPermintaanScreen(
                                 donorProfile = donor,
                                 onSuccess = {
                                     // Jika berhasil, navigasi (misal ke halaman Lacak/Sukses)
+                                    Toast.makeText(context, "Berhasil menerima permintaan!", Toast.LENGTH_SHORT).show()
                                     onAcceptClick()
                                 },
                                 onError = { error ->
-                                    // Tampilkan pesan error (bisa pakai Toast)
-                                    android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                                 }
                             )
                         }

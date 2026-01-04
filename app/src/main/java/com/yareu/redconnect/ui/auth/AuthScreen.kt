@@ -225,6 +225,7 @@ fun RegisterForm(
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var ktpNumber by remember { mutableStateOf("") }
 
     // State untuk loading dan error
     var isLoading by remember { mutableStateOf(false) }
@@ -310,8 +311,27 @@ fun RegisterForm(
         // Grup Upload KTP (Hanya untuk Pendonor)
         AnimatedVisibility(visible = role == UserRole.PENDONOR) {
             Column {
-                SectionTitle("Upload KTP (Opsional)")
-                UploadKtpField()
+                Text(
+                    "Informasi Identitas",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextFieldStandard(
+                    value = ktpNumber,
+                    onValueChange = { if (it.length <= 16) ktpNumber = it },
+                    label = "Nomor KTP (16 Digit)",
+                    placeholder = "Masukkan nomor sesuai KTP",
+                    keyboardType = KeyboardType.Number,
+                    enabled = !isLoading
+                )
+                Text(
+                    "Catatan: Data KTP akan divalidasi oleh petugas saat proses donor di lokasi.",
+                    fontSize = 11.sp,
+                    color = Gray,
+                    modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                )
                 Spacer(Modifier.height(16.dp))
             }
         }
@@ -334,6 +354,7 @@ fun RegisterForm(
                     bloodType = bloodType,
                     phoneNumber = phone,
                     address = address,
+                    ktpNumber = ktpNumber,
                     onSuccess = {
                         isLoading = false
                         onRegisterSuccess() // Panggil navigasi jika sukses

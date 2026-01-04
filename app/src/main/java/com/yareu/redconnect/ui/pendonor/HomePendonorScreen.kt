@@ -62,6 +62,7 @@ import com.yareu.redconnect.ui.theme.LightGray
 import com.yareu.redconnect.ui.theme.PinkAccent
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.White
+import com.yareu.redconnect.utils.LocationUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +73,7 @@ fun HomePendonorScreen(
 ) {
     val userProfile by authViewModel.userProfile.collectAsState()
     val isAvailable = userProfile?.isAvailable ?: true
-    val currentStatus = userProfile?.isAvailable ?: true
+    val currentStatus = userProfile?.isAvailable ?: return
 
     // Ambil data dari Firestore lewat ViewModel
     val allRequests by sosViewModel.emergencyRequests.collectAsState()
@@ -86,18 +87,19 @@ fun HomePendonorScreen(
     }
 
     // Hanya ambil yang goldarnya sama dan statusnya WAITING
-    val matchingRequests = allRequests.filter {
+    val matchingRequests = allRequests.filter { it ->
         val isCompatible = it.bloodType == userProfile?.bloodType &&
-                it.status == com.yareu.redconnect.data.RequestStatus.WAITING
+                it.status == RequestStatus.WAITING
 
-        val distance = com.yareu.redconnect.utils.LocationUtils.calculateDistance(
-            userProfile?.latitude ?: 0.0,
-            userProfile?.longitude ?: 0.0,
-            it.latitude,
-            it.longitude
+        // VALIDASI: Jika koordinat salah satu pihak 0.0, jangan tampilkan (karena data tidak valid)
+        if (it.latitude == 0.0 || userProfile?.latitude == 0.0) return@filter false
+
+        val distance = LocationUtils.calculateDistance(
+            userProfile?.latitude ?: 0.0, userProfile?.longitude ?: 0.0,
+            it.latitude, it.longitude
         )
 
-        isCompatible && distance <= 5000
+        isCompatible && distance <= 5000 // Hanya tampil jika < 5km
     }
 
     Scaffold(
@@ -112,9 +114,14 @@ fun HomePendonorScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Open notifications */ }) {
+                    IconButton(onClick = { onNavigate("notifikasi_screen") }) {
                         BadgedBox(
-                            badge = { Badge(containerColor = PinkAccent) }
+                            badge = {
+                                // Jika ada data di koleksi notifications yang belum dibaca
+                                Badge(containerColor = PinkAccent) {
+                                    Text("1") // Contoh angka statis dulu
+                                }
+                            }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,

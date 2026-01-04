@@ -44,20 +44,12 @@ class AdminViewModel : ViewModel() {
 
                 // Menggunakan TRANSACTION agar jika satu gagal, semua batal (menjaga integritas data)
                 firestore.runTransaction { transaction ->
-                    // Update status di dokumen SOS menjadi COMPLETED
                     transaction.update(requestRef, "status", RequestStatus.COMPLETED)
-
-                    // Tambah poin pendonor (+100)
-                    transaction.update(donorRef, "points", FieldValue.increment(Constants.POINTS_PER_DONATION.toLong()))
-
-                    // Tambah jumlah total donor (+1)
+                    transaction.update(donorRef, "points", FieldValue.increment(100))
                     transaction.update(donorRef, "totalDonations", FieldValue.increment(1))
-
-                    // Update status kesediaan pendonor (jadi istirahat otomatis setelah donor)
-                    transaction.update(donorRef, "isAvailable", false)
+                    transaction.update(donorRef, "isAvailable", false) // Otomatis istirahat
                     transaction.update(donorRef, "lastDonationDate", System.currentTimeMillis())
-
-                    null // Return null untuk transaksi
+                    null // Return null untuk menandakan transaksi sukses
                 }.await()
 
                 onSuccess()

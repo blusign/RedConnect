@@ -44,6 +44,7 @@ class AuthViewModel : ViewModel() {
         bloodType: String,
         phoneNumber: String,
         address: String,
+        ktpNumber: String,
         onSuccess: (uid: String) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -63,7 +64,8 @@ class AuthViewModel : ViewModel() {
                         bloodType = if (role == UserRole.PENDONOR) bloodType else "",
                         phoneNumber = phoneNumber,
                         address = address,
-                        isAvailable = true // Default untuk pendonor
+                        isAvailable = true, // Default untuk pendonor
+                        ktpNumber = ktpNumber
                     )
 
                     // menyimpan profil user ke Firestore di koleksi "users" dengan dokumen ID = UID
@@ -102,17 +104,17 @@ class AuthViewModel : ViewModel() {
                             onSuccess(user)
                         } else {
                             auth.signOut() // Paksa logout karena role tidak sesuai tab yang dipilih
-                            onError("Akun ini terdaftar sebagai ${user.role}, bukan $expectedRole")
-                        }
+                            onError("Maaf, akun Anda tidak terdaftar di bagian ini.")                        }
                     } else {
-                        onError("Data user tidak ditemukan di database")
+                        onError("Data user tidak ditemukan")
                     }
                 }
             } catch (e: Exception) {
                 val friendlyMessage = when {
                     e.message?.contains("invalid-credential") == true -> "Email atau password salah. Jika belum punya akun, silakan daftar."
+                    e.message?.contains("network") == true -> "Koneksi internet bermasalah."
                     e.message?.contains("user-not-found") == true -> "Akun tidak ditemukan. Silakan daftar terlebih dahulu."
-                    else -> "Terjadi kesalahan. Pastikan koneksi internet stabil."
+                    else -> "Terjadi kesalahan sistem, silakan coba lagi nanti."
                 }
                 onError(friendlyMessage)
             }
@@ -170,6 +172,27 @@ class AuthViewModel : ViewModel() {
                     latitude = lat,
                     longitude = lng,
                     address = addressName
+                )
+                onSuccess()
+            } catch (e: Exception) { }
+        }
+    }
+
+    fun updateProfile(newName: String, newPhone: String, newAddress: String, onSuccess: () -> Unit) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                firestore.collection("users").document(uid).update(mapOf(
+                    "name" to newName,
+                    "phoneNumber" to newPhone,
+                    "address" to newAddress
+                )).await()
+
+                // Refresh data lokal
+                _userProfile.value = _userProfile.value?.copy(
+                    name = newName,
+                    phoneNumber = newPhone,
+                    address = newAddress
                 )
                 onSuccess()
             } catch (e: Exception) { }

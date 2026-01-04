@@ -37,4 +37,6 @@ sealed class Screen(val route: String) {
     }
     object SelesaiDonor : Screen("selesai_donor")
 
+
+    object Notifikasi : Screen("notifikasi_screen")
 }

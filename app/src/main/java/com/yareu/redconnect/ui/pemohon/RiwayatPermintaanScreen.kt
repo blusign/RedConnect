@@ -1,6 +1,7 @@
 package com.yareu.redconnect.ui.pemohon
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -116,12 +118,25 @@ fun RiwayatPermintaanScreen(
                 Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("Dibatalkan") })
             }
 
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filteredRequests) { request ->
-                    RequestHistoryCard(request = request)
+            if (filteredRequests.isEmpty()) {
+                // TAMPILAN JIKA KOSONG
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "Belum ada riwayat permintaan.", color = Gray)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredRequests) { request ->
+                        RequestHistoryCard(request = request)
+                    }
                 }
             }
         }

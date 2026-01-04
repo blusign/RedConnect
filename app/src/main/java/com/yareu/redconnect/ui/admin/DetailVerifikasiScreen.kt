@@ -2,6 +2,7 @@ package com.yareu.redconnect.ui.admin
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -21,12 +22,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,6 +48,7 @@ import com.yareu.redconnect.ui.theme.DarkText
 import com.yareu.redconnect.ui.theme.ErrorRed
 import com.yareu.redconnect.ui.theme.Gray
 import com.yareu.redconnect.ui.theme.LightGray
+import com.yareu.redconnect.ui.theme.PinkAccent
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.SuccessGreen
 import com.yareu.redconnect.ui.theme.WarningYellow
@@ -58,13 +62,17 @@ fun DetailVerifikasiScreen(
     onSuccessNav: (String) -> Unit = {},
     onRejectClick: () -> Unit = {}
 ) {
+    LaunchedEffect(Unit) {
+        adminViewModel.fetchAllRequests()
+    }
+
     val allRequests by adminViewModel.adminRequests.collectAsState()
     val request = allRequests.find { it.id == requestId }
     val donor = request?.respondingDonors?.firstOrNull()
     val context = androidx.compose.ui.platform.LocalContext.current
 
     // Logika Eligibility (Contoh simpel: Jika donor sudah ada)
-    val isEligible = donor != null
+    val isEligible = donor != null && request?.status == RequestStatus.ACCEPTED
 
     Scaffold(
         topBar = {
@@ -75,8 +83,24 @@ fun DetailVerifikasiScreen(
         },
         containerColor = LightGray // Warna background abu-abu terang
     ) { padding ->
+        if (request == null) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = PinkAccent)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Memuat data permintaan...", color = Gray, fontSize = 12.sp)
+                }
+            }
+            return@Scaffold
+        }
+
+        // Jika request ditemukan, tampilkan konten di bawah ini
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState())
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(16.dp))
 
@@ -110,7 +134,9 @@ fun DetailVerifikasiScreen(
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
                     shape = RoundedCornerShape(12.dp),
                     enabled = isEligible && request?.status != RequestStatus.COMPLETED,

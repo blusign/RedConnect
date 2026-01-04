@@ -1,6 +1,7 @@
 package com.yareu.redconnect.ui.pendonor
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,6 +27,7 @@ import com.yareu.redconnect.ui.components.cards.EmergencyRequestCard
 import com.yareu.redconnect.ui.components.navigation.PendonorBottomNavigationBar
 import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.DarkText
+import com.yareu.redconnect.ui.theme.Gray
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 import com.yareu.redconnect.ui.theme.White
 
@@ -60,29 +63,41 @@ fun PermintaanDaruratScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-
-            items(activeRequests) { request -> // Pakai activeRequests
-                EmergencyRequestCard(
-                    requesterName = request.requesterName,
-                    bloodType = request.bloodType,
-                    facilityName = request.facilityName,
-                    distance = "Terdekat",
-                    timeAgo = com.yareu.redconnect.utils.DateUtils.getTimeAgo(request.createdAt),
-                    onDetailClick = {
-                        onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(request.id))
-                    }
-                )
+        if (activeRequests.isEmpty()) {
+            // TAMPILAN JIKA KOSONG
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Tidak ada permintaan darurat saat ini.", color = Gray)
             }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(8.dp)) }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+                items(activeRequests) { request ->
+                    EmergencyRequestCard(
+                        requesterName = request.requesterName,
+                        bloodType = request.bloodType,
+                        facilityName = request.facilityName,
+                        distance = "Terdekat",
+                        timeAgo = com.yareu.redconnect.utils.DateUtils.getTimeAgo(request.createdAt),
+                        onDetailClick = {
+                            onNavigate(com.yareu.redconnect.navigations.Screen.DetailPermintaan.createRoute(request.id))
+                        }
+                    )
+                }
+
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
         }
     }
 }

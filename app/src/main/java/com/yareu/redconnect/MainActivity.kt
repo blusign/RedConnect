@@ -20,6 +20,7 @@ import com.yareu.redconnect.ui.admin.HomeAdminScreen
 import com.yareu.redconnect.ui.admin.SelesaiDonorScreen
 import com.yareu.redconnect.ui.auth.AuthScreen
 import com.yareu.redconnect.ui.auth.AuthViewModel
+import com.yareu.redconnect.ui.common.NotifikasiScreen
 import com.yareu.redconnect.ui.onboardingScreens.OnboardingScreen
 import com.yareu.redconnect.ui.pemohon.FormSOSScreen
 import com.yareu.redconnect.ui.pemohon.HomePemohonScreen
@@ -145,6 +146,10 @@ class MainActivity : ComponentActivity() {
                     composable(Screen.ProfilPendonor.route) {
                         ProfilPendonorScreen(onNavigate = { route -> navController.navigate(route) })
                     }
+                    composable("notifikasi_screen") {
+                        NotifikasiScreen(onBackClick = { navController.popBackStack() })
+                    }
+
                     composable(Screen.DetailPermintaan.route) { backStackEntry ->
                         val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
 
