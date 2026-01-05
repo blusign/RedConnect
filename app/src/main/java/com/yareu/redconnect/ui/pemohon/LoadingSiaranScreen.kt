@@ -55,10 +55,16 @@ fun LoadingSiaranScreen(
     // Ambil jumlah pendonor secara dinamis dari data Firestore
     val donorCount = currentRequest?.respondingDonors?.size ?: 0
 
+    // Ambil data terbaru secara aktif
+    LaunchedEffect(Unit) {
+        sosViewModel.fetchEmergencyRequests()
+    }
+
+// Pantau perubahan status
     LaunchedEffect(currentRequest?.status) {
-        // Jika status berubah jadi ACCEPTED, berarti sudah ada pendonor
+        // Jika status berubah jadi ACCEPTED, berarti sudah ada pendonor yang klik 'Terima'
         if (currentRequest?.status == com.yareu.redconnect.data.RequestStatus.ACCEPTED) {
-            onDonorsFound()
+            onDonorsFound() // Ini akan memicu navigasi ke LacakPendonor
         }
     }
 

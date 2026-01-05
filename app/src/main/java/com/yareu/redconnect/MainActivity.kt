@@ -33,6 +33,7 @@ import com.yareu.redconnect.ui.pendonor.HomePendonorScreen
 import com.yareu.redconnect.ui.pendonor.PermintaanDaruratScreen
 import com.yareu.redconnect.ui.pendonor.ProfilPendonorScreen
 import com.yareu.redconnect.ui.pendonor.RiwayatDonorScreen
+import com.yareu.redconnect.ui.sos.SOSViewModel
 import com.yareu.redconnect.ui.theme.RedConnectTheme
 
 class MainActivity : ComponentActivity() {
@@ -104,17 +105,14 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(Screen.LoadingSiaran.route) { backStackEntry ->
                         val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
-
-                        val sosViewModel: com.yareu.redconnect.ui.sos.SOSViewModel =
-                            viewModel()
+                        val sosViewModel: SOSViewModel = viewModel()
 
                         LoadingSiaranScreen(
-                            requestId = requestId, // Pastikan parameter ini diterima di LoadingSiaranScreen
+                            requestId = requestId,
                             sosViewModel = sosViewModel,
                             onDonorsFound = {
-                                // Jika ditemukan pendonor, pindah ke layar Lacak
+                                // Gunakan replace agar user tidak bisa back ke halaman loading lagi
                                 navController.navigate(Screen.LacakPendonor.createRoute(requestId)) {
-                                    // Hapus loading dari tumpukan agar tidak bisa back ke loading lagi
                                     popUpTo(Screen.LoadingSiaran.route) { inclusive = true }
                                 }
                             },
